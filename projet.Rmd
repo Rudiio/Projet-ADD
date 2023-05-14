@@ -1,3 +1,840 @@
+<<<<<<< HEAD
+---
+title: "Projet Analyse de données"
+author: "Rudio et Léo-Paul"
+date: '2023-05-09'
+output:
+  html_document: default
+  pdf_document: default
+---
+
+# Présentation du projet et du jeu de données
+
+Le jeu  de données est constitués d'informations sur la vie d'étudiants dans une université du Portugal. Ces informations vont de leur résultats universitaires, leur vie familiale à leur consommation d'alcool. Le jeu a été construit à partir d'une enquête menée auprès d'étudiant  en mathématiques et en portugais.
+
+L'objectif serait alors d'analyser le jeu de données afin de comprendre les facteurs qui impactent la réussite scolaire de ces étudiants. L'intérêt du jeu est la grande variété de facteurs proposée qui permet de courvrir un maximum d'hypothèsesn, notamment celle sur la consommation d'alcool proposée directement par le nom du jeu de données.
+
+Voici les variabales présentent dans ce jeu de données ; 
+
+- **school** - student's school (binary: 'GP' - Gabriel Pereira or 'MS' - Mousinho da Silveira)
+- **sex** - student's sex (binary: 'F' - female or 'M' - male)
+- **age** - student's age (numeric: from 15 to 22)
+- **address** - student's home address type (binary: 'U' - urban or 'R' - rural)
+- **famsize** - family size (binary: 'LE3' - less or equal to 3 or 'GT3' - greater than 3)
+- **Pstatus** - parent's cohabitation status (binary: 'T' - living together or 'A' - apart)
+- **Medu** - mother's education (numeric: 0 - none, 1 - primary education (4th grade), 2 – 5th to 9th grade, 3 – secondary education or 4 – higher education)
+- **Fedu** - father's education (numeric: 0 - none, 1 - primary education (4th grade), 2 – 5th to 9th grade, 3 – secondary education or 4 – higher education)
+- **Mjob** - mother's job (nominal: 'teacher', 'health' care related, civil 'services' (e.g. administrative or police), 'at_home' or 'other')
+- **Fjob** - father's job (nominal: 'teacher', 'health' care related, civil 'services' (e.g. administrative or police), 'at_home' or 'other')
+- **reason** - reason to choose this school (nominal: close to 'home', school 'reputation', 'course' preference or 'other')
+- **guardian** - student's guardian (nominal: 'mother', 'father' or 'other')
+- **traveltime** - home to school travel time (numeric: 1 - <15 min., 2 - 15 to 30 min., 3 - 30 min. to 1 hour, or 4 - >1 hour)
+- **studytime** - weekly study time (numeric: 1 - <2 hours, 2 - 2 to 5 hours, 3 - 5 to 10 hours, or 4 - >10 hours)
+- **failures** - number of past class failures (numeric: n if 1<=n<3, else 4)
+- **schoolsup** - extra educational support (binary: yes or no)
+- **famsup** - family educational support (binary: yes or no)
+- **paid** - extra paid classes within the course subject (Math or Portuguese) (binary: yes or no)
+- **activities** - extra-curricular activities (binary: yes or no)
+- **nursery** - attended nursery school (binary: yes or no)
+- **higher** - wants to take higher education (binary: yes or no)
+- **internet** - Internet access at home (binary: yes or no)
+- **romantic** - with a romantic relationship (binary: yes or no)
+- **famrel** - quality of family relationships (numeric: from 1 - very bad to 5 - excellent)
+- **freetime** - free time after school (numeric: from 1 - very low to 5 - very high)
+- **goout** - going out with friends (numeric: from 1 - very low to 5 - very high)
+- **Dalc** - workday alcohol consumption (numeric: from 1 - very low to 5 - very high)
+- **Walc** - weekend alcohol consumption (numeric: from 1 - very low to 5 - very high)
+- **health** - current health status (numeric: from 1 - very bad to 5 - very good)
+- **absences** - number of school absences (numeric: from 0 to 93)
+
+These grades are related with the course subject, Math or Portuguese:
+- **G1** - first period grade (numeric: from 0 to 20)
+- **G2** - second period grade (numeric: from 0 to 20)
+- **G3** - final grade (numeric: from 0 to 20, output target)
+
+Au cours de ce projet, nous nous concentrons sur la variable G3 qui est la variable de sortie représentant la note finale des élèves. Il s'agirait donc d'un problème de régression sur la variables G3 ou même plus généralement un problème de classification.
+
+Voici les étapes que nous allons suivre : 
+
+1. Identifier les variables significatives
+2. Appliquer des méthodes de classification sur la réussite scolaire
+2. Effectuer une regression linéaires pour prédire G3
+3. Comparer des méthodes de machine learning pour prédire G3
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(FactoMineR)
+library(pROC)
+library(MASS)
+library(randomForest)
+```
+
+## 1.Chargement des données
+
+```{r}
+# Chargement de la base de données
+df.mat=read.table("student-mat.csv",sep=",",header=TRUE,as.is = FALSE)
+df.por=read.table("student-por.csv",sep=",",header=TRUE,as.is = FALSE)
+
+# Etudiants qui appartiennent aux deux cours
+both= merge(df.mat,df.por,by=c("school","sex","age","address","famsize","Pstatus","Medu","Fedu","Mjob","Fjob","reason","nursery","internet"))
+
+# Concaténation des deux dataframes
+df = rbind(df.mat,df.por)
+head(df)
+```
+
+## 2. Nettoyage et vérification des données
+
+Le jeu est composé de 33 variables dont 17 qualitatives et 16 quantitatives.
+On calcule la moyenne pour chaque élève, et on rajoute une variable pour la réussite scolaire.
+
+
+```{r}
+print(str(df))
+print(nrow(df))
+
+## On calcule la moyenne des étudiants
+df$Moy = (df$G1+df$G2+df$G3)/3
+
+## On rajoute la réussite scolaire comme variable qualitative que nous devrons prédire.
+df$RS = factor(df$Moy>=10)
+head(df)
+
+```
+
+# 3. Exploration des données : études des variables 
+
+Cette partie consiste à appliquer des méthodes de statistiques descriptives afin de mieux comprendre le jeu de données. 
+On se concentre sur l'analyse de la distribution des variables et leur corrélation avec les résultats scolaires.
+
+## Le sexe des étudiants
+
+D'après le diagramme, le dataset est plutôt équilibré en terme d'hommes et de femmes,il y même plus de femmes que d'hommes dans ce lycées. 
+On étudie ensuite le lien entre le sexe et les notes en effectant une ANOVA1.
+D'après le test de Fisher, p-value > 5% donc il n'y a pas d'effet du sexe sur les notes. D'après le test d'indépendances de Chi2 avec l'admission, le sexe des élèves n'a pas de lien avec leur réussite scolaire.
+
+```{r}
+# Distribution
+library(ggplot2)
+ggplot(df, aes(x = sex)) + 
+  geom_bar(fill = "steelblue") + 
+  labs(title = "Répartition des sexes")
+
+
+# Lien avec la moyenne
+summary(lm(Moy ~ sex,data=df))
+
+# Lien avec la réussite
+chisq.test(df$sex,df$RS)
+
+
+```
+
+## La taille de la famille
+
+On a deux fois plus de grandes familles que de petites familles.
+D'après le test de Fisher, il y a bien un impactde taille de la famille sur les notes. Le test d'indépendance avec la réussite indique cependant que la taille de la famille n'est pas liée à la réussite scolaire.
+
+```{r}
+# Distribution
+ggplot(data = df, aes(x = famsize, fill = famsize)) +
+  geom_bar() +
+  labs(title = "Distribution de la taille de la famille",
+       x = "Taille de la famille", y = "Nombre d'étudiants") +
+  scale_fill_manual(values = c("#7570b3","#F0E442"))
+
+ggplot(data = df, aes(x = famsize)) +
+  geom_bar() +
+  labs(title = "Distribution de la taille de la famille",
+       x = "Taille de la famille", y = "Nombre d'étudiants")
+  
+
+#barplot(table(df$famsize),main="Distribution de la taille de la famille")
+
+# Lien avec les notes
+summary(lm(Moy ~ famsize,data=df))
+
+# Lien avec la réussite
+chisq.test(df$famsize,df$RS)
+```
+## Situation familliale : séparation des parents
+
+Le jeu est très déséquilibré au sujet de la situation famille : il y a 4 fois plus d'étudiants qui ont leurs parents qui vivent ensemble.
+De plus, le test de Fisher indique que la situation familliale n'a pas d'impact sur les notes. Le test de Chi2 soutient que le status des parents et la réussite scolaire sont indépendants.
+
+```{r}
+# Distribution
+
+ggplot(data = df, aes(x = Pstatus, fill = Pstatus)) +
+  geom_bar() +
+  scale_fill_manual(values = c("#0072B2", "#009E73")) +
+  labs(title = "Distribution de la situation conjugale des parents",
+       x = "Situation conjugale", y = "Nombre d'étudiants")
+
+#barplot(table(df$Pstatus),main="Distribution de la situation familiale")
+
+# Lien avec les notes
+summary(lm(Moy ~ Pstatus,data=df))
+
+# Lien avec la réussite
+chisq.test(df$Pstatus,df$RS)
+```
+
+## Travail des parents
+
+Dans les deux cas, others et services sont les catégories qui dominent. Une différence notable est la que la proportion de femme au-foyer est bien plus élevée que celle des hommes.
+D'après le test de Fisher, le travail de la mère a un impact sur les notes, contrairement à celui du père.
+Les résultats des test de Chis2 suivent les résultats des test de Fisher : le travail de la mère et la réussite scolaire sont bien corrélés mais celui du père n'a pas d'impact. 
+
+```{r}
+#Distributions
+library(gridExtra)
+par(mfrow=c(1,2))
+
+g2=ggplot(data = df, aes(x = Mjob)) +
+  geom_bar() +
+  labs(title = "Distribution du travail de la mère") +
+  scale_fill_manual(values = c("#7570b3","#0072B2", "#E69F00", "#009E73", "#F0E442"))
+
+g1=ggplot(data = df, aes(x = Fjob)) +
+  geom_bar() +
+  labs(title="Distribution du travail du père") +
+  scale_fill_manual(values = c("#7570b3","#0072B2", "#E69F00", "#009E73", "#F0E442"))
+
+  
+
+grid.arrange(g1, g2, ncol = 2)
+
+#barplot(table(df$Mjob),main="Distribution du travail de la mère")
+#barplot(table(df$Fjob),main="Distribution du travail du père")
+
+# Lien avec les notes
+summary(lm(Moy ~ Medu+Fedu,data=df))
+
+# Lien avec la réussite
+chisq.test(df$Mjob,df$RS)
+chisq.test(df$Fjob,df$RS)
+```
+## Les raisons du choix d'école
+
+D'après le digramme circulaire, seule "other" possède un petit effectif alors que "course" domine. Ainsi, les élèves vont majoritairement en cours car ils les apprécient. 
+D'après l'ANOVA1, il est clair que la raison d'aller en cours impacte les notes des étudiants (p-value < 5%). Cela paraît cohérent étant donné que cela détermine leur motivation à avoir de bonnes notes.
+De la même manière, la raison est bien corrélé avec la réussite scolaire, ce qui parâit bien cohérent.
+
+```{r}
+#  Distribution
+#barplot(table(df$reason),main="Distribution des raisons d'aller étudier")
+
+ggplot(data = df, aes(x = reason, fill = reason)) +
+  geom_bar() +
+  labs(title="Distribution du travail du père") +
+  scale_fill_manual(values = c("#7570b3","#0072B2", "#E69F00", "#009E73", "#F0E442"))
+
+# Lien avec les notes
+summary(lm(Moy~ reason,data=df))
+
+# Lien avec la réussite
+chisq.test(df$reason,df$RS)
+```
+
+## Les relations
+
+Il y a environ deux fois plus de jeunes célibataires que de jeunes en couple. 
+On peut penser qu'être en couple réduit le temps passé à étudier et rajoute des distractions, donc il devrait avoir un impact négatif sur les notes. D'après le test de Fisher, la p-value est fortement inférieure à 5%, donc on rejette H0: il y a bien un lien entre situation romantique et notes, ce qui rejoint bien l'idée de départ.
+Il serait donc intéréssant d'étudier la distribution des notes selon la situation romantique. D'après les boxplots, les différences sont assez minimes, même si on peut aperçevoir que les notes des célibataires sont légèrement meilleures.
+Cependant, la présence de relation amoureuse n'a pas d'impact sur la réussite scolaire. Ainsi, être en couple fait baisser la moyenne mais n'est pas un facteur d'échec.
+
+```{r}
+# Distribution
+gr1=ggplot(df, aes(x = romantic)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Distribution des personnes en couple",
+       x = "Couple", y = "Nombre d'étudiants")
+
+# Lien avec les notes
+summary(lm(Moy~ romantic,data=df))
+
+yes = df$Moy[df$romantic=='yes']
+no = df$Moy[df$romantic=='no']
+
+# Boxplot des notes
+gr2=ggplot(data = df, aes(x = romantic, y = Moy, fill = romantic)) +
+  geom_boxplot() +
+  scale_fill_manual(values = c("#0072B2", "#F0E442")) +
+  labs(title = "Relation entre être en couple et les notes",
+       x = "Couple", y = "Notes")
+
+grid.arrange(gr1, gr2, ncol = 2)
+#barplot(table(df$romantic),main="Distribution des personnes en couple")
+
+# Boxplot des notes
+#par(mfrow=c(1,2))
+#boxplot(no,main="no")
+#boxplot(yes,main="yes")
+
+# Lien avec la réussite
+chisq.test(df$romantic,df$RS)
+```
+
+## Volonté de faire des études supérieures
+
+On observe qu'au moins 80% des élèves veulent continuer leur études après le lycée, ce qui est plutôt rassurant. De plus, d'après le test de Fisher, les deux variables sont corrélées.
+On peut également annoncer que ceux qui veulent faire des études supérieures tendent à avoir de meilleures notes grâce au test unilatéral.
+A priori, la volonté de faire des études supérieures est corrélée à la réussite scolaire. Donc, ceux qui veulent poursuivre leurs études auront de meileures notes et tendance à ne pas être en échec.
+
+```{r}
+
+# distribution
+g1=ggplot(df, aes(x = higher, fill = higher)) +
+  geom_bar() +
+  labs(title = "Distribution de l'envie de faire des études supérieures",
+       x = "Envie de faire des études supérieures", y = "Nombre d'étudiants") +
+  scale_fill_manual(values = c("#E69F00", "#0072B2"))
+
+# Boxplot des notes en fonction de l'envie de faire des études supérieures
+g2=ggplot(df, aes(x = higher, y = Moy, fill = higher)) +
+  geom_boxplot() +
+  labs(title = "Notes en fonction de l'envie de faire des études supérieures",
+       x = "Envie de faire des études supérieures", y = "Moyenne") +
+  scale_fill_manual(values = c("#E69F00", "#0072B2"))
+
+grid.arrange(g1, g2, ncol = 2)
+
+#Distribution
+#barplot(table(df$higher),main="Distribution de l'envie de faire des études supérieures")
+
+# Lien avec les notes
+summary(lm(Moy ~ higher,data=df))
+
+yes = df$Moy[df$higher=='yes']
+no = df$Moy[df$higher=='no']
+
+# Boxplot des notes
+#par(mfrow=c(1,2))
+#hist(no,main="no")
+#hist(yes,main="yes")
+
+# Lien avec la réussite
+chisq.test(df$higher,df$RS)
+```
+
+## Activités extrascolaires
+
+On a autant d'élèves qui pratiquent des activités extrascolaires que d'élèves qui n'en pratiquent pas, ce qui est plutôt intéréssant.
+De plus, le test de Fisher indique plutôt qu'il n'y a pas de liens entre les activités extrascolaires et les notes, ce qui est plutôt surprenant  étant donné que l'on aurait tendance à penser que les étudiants ayant des activités, ont moins de temps pour étudier. Dans la même lignée, les  activités sont plutôt indépendates de la réussite d'après le test de Chi2.
+
+```{r}
+# Distribution
+ggplot(df, aes(x = activities, fill = activities)) +
+  geom_bar() +
+  labs(title = "Distribution de de la pratique d'activités extrascolaires",
+       x = "Envisagez-vous de faire des études supérieures ?", 
+       y = "Nombre d'étudiants") +
+  scale_fill_manual(values = c("#0072B2", "#F0E442"))
+
+#barplot(table(df$activities),main="Distribution de la pratique d'activités extrascolaires")
+
+# Lien avec les notes
+summary(lm(Moy ~ activities,data=df))
+
+# Lien avec la réussite
+chisq.test(df$activities,df$RS)
+```
+
+## Cours supplémentaires 
+
+Il y a bien plus d'élèves qui ne suivent pas de cours supplémentaires que d'élèves qui en suivent. Cett distributution est cohérente avec l'idée qu'on oeut se faire.
+Le test de Fisher indique plutôt  que les suivis de cours supplémentaires n'a pas d'impact sur la moyenne. Cependant, d'après le test du Chi2, le suivi de cours supplémentare est bien lié à la réussite scolaire.
+
+```{r}
+# Distribution
+ggplot(data = df, aes(x =paid, fill = paid)) +
+  geom_bar() +
+  labs(title = "Distribution de la pratique des cours supplémentaire",
+       x = "Taille de la famille", y = "Nombre d'étudiants") +
+  scale_fill_manual(values = c("#7570b3","#F0E442"))
+
+#barplot(table(df$paid),main="Distribution de la pratique des cours supplémentaires")
+
+# Lien avec la moyenne
+summary(lm(Moy ~ paid,data=df))
+
+# Lien avec la réussite
+chisq.test(df$paid,df$RS)
+```
+
+# 4. Machine Learning : Classification de la réussite scolare 
+
+Dans cette partie, nous nous concentrons sur la mise en place de méthodes de classification afin de prédire la variable RS (réussite scolaire).
+Nous nous intéresserons essentiellement à la comparaison des résultats de chacune des méthodes. Les méthodes utilisées seront évaluées avec leur accuracy et leur courbe ROC.
+
+## a) Séparation du jeu de données
+
+Ici, nous découpons notre dataset en jeu d'entraînement et jeu de test. Le ratio utilisé est $\frac{1}{5}$ pour le jeu de test.
+Tout d'abord on modifie notre jeu de données pour le préparer pour la classification en retirant les notes.
+
+
+```{r}
+# Suppresion des colonnes
+X = subset(df, select = -c(G1,G2,G3,Moy) )
+
+set.seed(1)
+n <- nrow(X)
+p <- ncol(X)-1
+test.ratio <- .2 # ratio of test/train samples
+n.test <- round(n*test.ratio)
+n.test
+tr <- sample(1:n,n.test)
+df.test <- X[tr,]
+df.train <- X[-tr,]
+```
+
+
+
+## b) LDA
+
+```{r}
+res_lda=lda(df.train$RS ~., data=df.train)
+pred_lda <- predict(res_lda,newdata=df.test)$posterior[,2] 
+
+# Table de confusion
+table(df.test$RS,predict(res_lda,newdata=df.test)$class)
+
+# Courbe ROC
+ROC_lda <- roc(df.test$RS, pred_lda)
+plot(ROC_lda, print.auc=TRUE,  print.auc.y = 0.5)
+ROC_lda$auc
+
+# Accuracy 
+accuracy_lda = mean(df.test$RS==predict(res_lda,newdata=df.test)$class)
+print("accuracy lda = ")
+print(accuracy_lda)
+
+
+```
+
+## c) QDA
+
+```{r}
+res_qda = qda(df.train$RS~., data=df.train)
+pred_qda <- predict(res_qda,newdata=df.test)$posterior[,2] 
+
+# Table de confusion
+table(df.test$RS,predict(res_qda,newdata=df.test)$class)
+
+# Courbe ROC
+ROC_qda <- roc(df.test$RS, pred_qda)
+plot(ROC_qda, print.auc=TRUE,  print.auc.y = 0.5)
+ROC_qda$auc
+
+# Accuracy 
+accuracy_qda = mean(df.test$RS==predict(res_qda,newdata=df.test)$class)
+print("accuracy qda = ")
+print(accuracy_qda)
+```
+
+## d) Stepwise
+
+```{r}
+library(klaR)
+stepwise_lda=stepclass(RS~., data=df.train, method="lda", direction="backward")
+stepwise_lda
+res_stepwise_lda = lda(stepwise_lda$formula, data=df.train)
+
+pred_lda_step <- predict(res_stepwise_lda,newdata=df.test)$posterior[,2] 
+
+# Table de confusion
+table(df.test$RS, predict(res_stepwise_lda,newdata=df.test)$class)
+
+# Courbe ROC
+ROC_lda_step <- roc(df.test$RS, pred_lda)
+plot(ROC_lda_step, print.auc=TRUE,  print.auc.y = 0.5)
+ROC_lda_step$auc
+
+# Accuracy 
+accuracy_lda_stepwise = mean(df.test$RS== predict(res_stepwise_lda,newdata=df.test)$class)
+print("accuracy lda stepwise = ")
+print(accuracy_lda_stepwise)
+```
+
+
+## e) Random Forest
+
+```{r}
+
+res_RF <- randomForest(RS~.,df.train)
+res_RF
+plot(res_RF)
+
+## prédiction :
+pred_RF <- predict(res_RF,newdata=df.test)
+
+## Table confusion et accuracy :
+table(df.test$RS, predict(res_RF,newdata=df.test,type="class"))
+
+## aire sous courbe ROC
+pred_RF = predict(res_RF, df.test, type="prob")[,2] 
+ROC_RF <- roc(df.test$RS, pred_RF)
+ROC_RF$auc
+
+## Accuracy
+accuracy_RF = mean(df.test$RS==predict(res_RF,newdata=df.test,type="class"))
+print("accuracy RF = ")
+print(accuracy_RF)
+
+```
+
+## f) CART
+
+```{r}
+library(rpart)
+library(rpart.plot)
+
+arbre = rpart(df.train$RS~.,df.train,control=rpart.control(minsplit=5,cp=0.025))
+cp.opt = arbre$cptable[which.min(arbre$cptable[, "xerror"]), "CP"]
+res_cart = prune(arbre,cp=cp.opt)
+rpart.plot(res_cart)
+
+## prédiction :
+pred_cart <- predict(res_cart,newdata=df.test)[,2] 
+
+## Table confusion et accuracy :
+table(df.test$RS, predict(res_cart,newdata=df.test,type="class"))
+
+## aire sous courbe ROC
+pred_cart = predict(res_cart, df.test, type="prob")[,2] 
+ROC_cart <- roc(df.test$RS, pred_cart)
+ROC_cart$auc
+
+## Accuracy
+accuracy_cart = mean(df.test$RS==predict(res_cart,newdata=df.test,type="class"))
+print("accuracy cart = ")
+print(accuracy_cart)
+```
+h) Adaboost
+
+```{r}
+library(gbm)
+
+fit.adaboost=gbm(as.numeric(RS)-1 ~., df.train, distribution = "adaboost")
+fit.adaboost
+
+### Calibrer B=n.tree par cross-validation : 
+fit.adaboost=gbm(as.numeric(RS)-1 ~., df.train, distribution = "adaboost",cv.folds = 5, shrinkage = 0.01, n.trees=3000)
+gbm.perf(fit.adaboost)
+B.opt = gbm.perf(fit.adaboost, method="cv")
+
+## prédiction : 
+pred_adaboost = predict(fit.adaboost, newdata=df.test, type = "response", n.trees = B.opt)
+class = 1*(pred_adaboost>1/2)
+
+## Table confusion et accuracy :
+table(df.test$RS, class)
+
+## Accuracy
+accuracy_adaboost = mean(as.numeric(df.test$RS)-1==class)
+print("accuracy adaboost = ")
+print(accuracy_adaboost)
+
+## aire sous courbe ROC
+ROC_adaboost <- roc(df.test$RS, pred_adaboost)
+ROC_adaboost$auc
+```
+## i) Regression Logistique
+
+```{r}
+
+### Modèle
+logit.train <- glm(RS ~ ., family = binomial , data=df.train)
+
+## prédiction :
+pred_logit <- predict(logit.train,newdata=df.test)
+class = 1*(pred_logit>1/2)
+
+## Table confusion et accuracy :
+table(df.test$RS, class)
+
+## aire sous courbe ROC
+ROC_logit <- roc(df.test$RS, pred_logit)
+
+## Accuracy
+accuracy_logit = mean(as.numeric(df.test$RS)-1==class)
+print("accuracy regression logistique = ")
+print(accuracy_logit)
+
+ROC_logit$auc
+```
+
+```{r}
+# # régression logistique Lasso
+# library(glmnet)
+# res_Lasso <- glmnet(as.matrix(df.train[,-1]),df.train$RS,family='binomial') 
+# plot(res_Lasso, label = TRUE)  # en abscisse : norme des coefficients
+# plot(res_Lasso, xvar = "lambda", label = TRUE) # en abscisse : log(lambda)
+# # sum(coef(res_Lasso, s=exp())!=0)
+# 
+# cvLasso <- cv.glmnet(as.matrix(df.train[,-1]),df.train$RS,family="binomial", type.measure = "class") 
+# plot(cvLasso)
+# cvLasso$lambda.min
+# coef(res_Lasso, s=cvLasso$lambda.min)
+# 
+# #prédiction
+# class_logit_lasso=predict(cvLasso, newx = as.matrix(df.test[,-1]), s = 'lambda.min', type = "class")
+# 
+# #Table de confusion et accuracy
+# table(df.test$RS, class_logit_lasso)
+# pred_logit_lasso=predict(cvLasso, newx = as.matrix(df.test[,-1]), s = 'lambda.min', type = "response")
+# 
+# accuracy_logit_lasso = mean(df.test$RS==class_logit_lasso)
+# print("accuracy regression logistique lasso= ")
+# print(accuracy_logit_lasso)
+# 
+# #pred_logit_lasso
+# ROC_logit_lasso = roc( df.test$RS, pred_logit_lasso)
+# ROC_logit_lasso$auc
+```
+
+## Comparaison
+
+```{r}
+result=matrix(NA, ncol=6, nrow=2)
+rownames(result)=c('accuracy', 'AUC')
+colnames(result)=c('lda', 'qda', 'cart', 'RF', "adaboost","logit")
+result[1,]= c(accuracy_lda, accuracy_qda, accuracy_cart, accuracy_RF,accuracy_adaboost,accuracy_logit)
+result[2,]=c(ROC_lda$auc, ROC_qda$auc, ROC_cart$auc, ROC_RF$auc,  ROC_adaboost$auc,ROC_logit$auc)
+result
+apply(result,1, which.max )
+
+plot(ROC_lda, xlim=c(1,0))
+plot(ROC_qda, add=TRUE, col=2)
+plot(ROC_cart, add=TRUE, col=3)
+plot(ROC_RF, add=TRUE, col=4)
+plot(ROC_adaboost, add=TRUE, col=5)
+plot(ROC_logit, add=TRUE, col=6)
+legend('bottom', col=1:5, paste(c('lda', 'qda', 'cart', 'RF', "ada","logit")),  lwd=1)
+
+```
+
+##Partie variablr quantitative 
+
+```{r}
+data=df
+data_quanti=data[c(3,7,8,13,14,15,25,26,27,28,29,30,31,32,33)]
+data_quanti_mat=df.mat[c(3,7,8,13,14,15,25,26,27,28,29,30,31,32,33)]
+data_quanti_por=df.por[c(3,7,8,13,14,15,25,26,27,28,29,30,31,32,33)]
+head(data_quanti)
+```
+```{r}
+library(ggplot2)
+library("dplyr")
+
+attach(data_quanti)
+data_age=data_quanti
+
+data_age=summarise(group_by(data_age,age),n_obs=n()) #on groupe par âge avec le nombre de personnes dans chaque classe
+
+#création du camembert
+ggplot(data = data_age, aes(x = "", y = n_obs, fill = age)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  labs(title = "Répartition par âge toutes filière confondue")
+
+```
+La couleur la plus claire correspond à l'âge le plus grand (22 ans), dès que l'on passe à une couleur plus foncée, on diminue l'âge de 1. On voit clairement ici que la majorité des étudiants ont entre 15 et 19 ans. 
+
+```{r}
+data_age_mat=data_quanti_mat
+data_age_por=data_quanti_por
+
+data_age_mat=summarise(group_by(data_age_mat,age),n_obs_mat=n()) #on groupe par âge avec le nombre de personnes dans chaque classe
+data_age_por=summarise(group_by(data_age_por,age),n_obs_por=n())
+
+#création du camembert
+p1=ggplot(data = data_age_mat, aes(x = "", y = n_obs_mat, fill = age)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  labs(title = "Répartition par âge dans la section maths")
+
+p2=ggplot(data = data_age_por, aes(x = "", y = n_obs_por, fill = age)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  labs(title = "Répartition par âge dans la section portugais")
+
+
+library(gridExtra)
+grid.arrange(p1, p2, ncol = 2)
+```
+
+```{r}
+data_age_mat <- data_age_mat %>%
+  mutate(proportion = n_obs_mat / sum(n_obs_mat))
+
+data_age_por <- data_age_por %>%
+  mutate(proportion = n_obs_por / sum(n_obs_por))
+
+#on renome de la même manière les colonnes du nombre d'étudiants pour chaque obersvation
+data_age_mat$filiere=c(rep("math",nrow(data_age_mat)))
+data_age_por$filiere=c(rep("portugais",nrow(data_age_por)))
+colnames(data_age_mat)[colnames(data_age_mat) == "n_obs_mat"] <- "n_obs"
+colnames(data_age_por)[colnames(data_age_por) == "n_obs_por"] <- "n_obs"
+
+#on concatène les deux datas frame
+data_age=rbind(data_age_mat,data_age_por)
+
+#Création du graphique
+
+ggplot(data_age, aes(x = age, y = proportion, fill = filiere)) + 
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  labs(title = "Comparaison des âges dans chaque filière", x ="âge", y = "porportion d'étudiants au sein du groupe") +
+  scale_fill_manual(values = c("red", "blue")) 
+```
+On voit que la répartion d'âge est la même dans chaque filière
+```{r}
+data_stud=data_quanti
+data_stud=summarise(group_by(data_stud,studytime),n_obs=n()) #on groupe par temps d'étude par semaine 
+
+data_stud$studytime[data_stud$studytime == 1] <- "<2 hours"
+data_stud$studytime[data_stud$studytime == 2] <- "2 to 5 hours"
+data_stud$studytime[data_stud$studytime == 3] <- "5 to 10 hours"
+data_stud$studytime[data_stud$studytime == 4] <- ">10 hours"
+
+
+ggplot(data_stud, aes(x = "", y = n_obs, fill = factor(studytime))) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  labs(title = "Répartition des temps d'étude toutes filières confondues") +
+  scale_fill_discrete(name = "Temps d'étude", labels = c("<=2 hours", "2 to 5 hours", "5 to 10 hours", ">10 hours"))
+```
+
+On voit clairement que les étudiants travaillent majoritairement moins de 2h00 ou entre 5h00 et 10h00 par semaines.
+
+```{r}
+#creation data frame stud pour le groupe portugais
+data_stud_por=data_quanti_por
+data_stud_por=summarise(group_by(data_stud_por,studytime),n_obs_por=n()) #on groupe par temps d'étude par semaine 
+
+data_stud_por$studytime[data_stud_por$studytime == 1] <- "<2 hours"
+data_stud_por$studytime[data_stud_por$studytime == 2] <- "2 to 5 hours"
+data_stud_por$studytime[data_stud_por$studytime == 3] <- "5 to 10 hours"
+data_stud_por$studytime[data_stud_por$studytime == 4] <- ">10 hours"
+
+#creation data frame stud pour le groupe mat b
+data_stud_mat=data_quanti_mat
+data_stud_mat=summarise(group_by(data_stud_mat,studytime),n_obs_mat=n()) #on groupe par temps d'étude par semaine 
+
+data_stud_mat$studytime[data_stud_mat$studytime == 1] <- "<2 hours"
+data_stud_mat$studytime[data_stud_mat$studytime == 2] <- "2 to 5 hours"
+data_stud_mat$studytime[data_stud_mat$studytime == 3] <- "5 to 10 hours"
+data_stud_mat$studytime[data_stud_mat$studytime == 4] <- ">10 hours"
+
+library(gridExtra)
+
+#création des camemberts pour les deux sections
+p1=ggplot() +
+  # Premier camembert
+  geom_bar(data = data_stud_mat, aes(x = "", y = n_obs_mat, fill = factor(studytime)), stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  theme_void() +
+  labs(title = "Temps d'étude par semaine dans la section maths (à gauche) et portugaise (à droite)") 
+
+  # Deuxième camembert
+p2=ggplot() +
+  geom_bar(data = data_stud_por, aes(x = "", y = n_obs_por, fill = factor(studytime)), stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  theme_void() 
+
+grid.arrange(p1, p2, ncol = 2)
+data_stud_mat
+```
+On voit qu'il y a plus de personnes qui travaillent moins de deux heures par semaine dans la section portiguaise tandis qu'il y a moins de personnes qui travaillent plus de 10h00 dans cette même section. Le nombre d'étudiants travaillant entre 5 et 10 heures semble être a peu près le même. En effet:
+```{r}
+#on calcul la porportion pour pouvoir comparer
+data_stud_mat <- data_stud_mat %>%
+  mutate(proportion = n_obs_mat / sum(n_obs_mat))
+
+data_stud_por <- data_stud_por %>%
+  mutate(proportion = n_obs_por / sum(n_obs_por))
+
+#on renome de la même manière les colonnes du nombre d'étudiants pour chaque obersvation
+data_stud_mat$filiere=c(rep("math",nrow(data_stud_mat)))
+data_stud_por$filiere=c(rep("portugais",nrow(data_stud_por)))
+colnames(data_stud_mat)[colnames(data_stud_mat) == "n_obs_mat"] <- "n_obs"
+colnames(data_stud_por)[colnames(data_stud_por) == "n_obs_por"] <- "n_obs"
+
+#on concatène les deux datas frame
+data_stud=rbind(data_stud_mat,data_stud_por)
+
+#Création du graphique
+
+ggplot(data_stud, aes(x = studytime, y = proportion, fill = filiere)) + 
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  labs(title = "Comparaison du temps de travail entre deux filières", x = "Temps de travail par semaine", y = "Proportion d'étudiants au sein de chaque groupe") +
+  scale_fill_manual(values = c("red", "blue"))
+
+```
+On s'aperçoit donc que les élèves dans la filière mathématiques travaillent plus
+```{r}
+data_quanti$studytime[data_quanti$studytime == 1] <- "<2 hours"
+data_quanti$studytime[data_quanti$studytime == 2] <- "2 to 5 hours"
+data_quanti$studytime[data_quanti$studytime == 3] <- "5 to 10 hours"
+data_quanti$studytime[data_quanti$studytime == 4] <- ">10 hours"
+
+ggplot(data_quanti, aes(x = G3, y = studytime)) +
+  geom_boxplot() 
+```
+On voit que globalement, les élèves qui travaillent plus on de meilleures notes (comportement bizarre à vérifier)
+
+```{r}
+#oui rudio j'ai fait un truc avec de qualis 
+
+ggplot(df[df$address == 'U',], aes(x=absences)) +
+  geom_histogram(aes(y = ..count.. / sum(..count..)), binwidth=1, fill="steelblue", color="white") +
+  labs(title="Distribution des absences des étudiants vivants en ville",
+       x="Nombre d'absences", y="Proportion d'étudiants") +
+  theme_minimal()
+
+```
+```{r}
+data_health=data_quanti
+data_health=summarise(group_by(data_health,health),n_obs=n())
+
+
+ggplot(data_health, aes(x = "", y = n_obs, fill = factor(health))) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  labs(title = "Santé des étudiants") +
+  scale_fill_discrete(name = "Niveau de santé", labels = c(1,2,3,4,5))
+
+```
+On voit que la plupart des étudiant sont en bonne santé
+```{r}
+data_quanti$health=factor(data_quanti$health)
+ggplot(data_quanti, aes(x = G3, y = health)) +
+  geom_boxplot() 
+
+
+```
+On voit que les étudiants en meilleure santé ont une meilleure réussite
+```{r}
+
+ggplot(df, aes(x = age, y = G3, color = paid)) +
+  geom_point(alpha = 0.7) +
+  facet_wrap(~paid) +
+  labs(title = "Distribution de l'âge et de la note finale en fonction cours particuliers et de l'âge",
+       x = "Âge", y = "Note finale")
+```
+Curieusement, les résultats semblent meilleur pour ceux qui n'on pas pris de cours
+```{r}
+
+```
+
+
+
+
+
+=======
 ---
 title: "Projet Analyse de données"
 author: "Rudio et Léo-Paul"
@@ -528,3 +1365,4 @@ legend('bottom', col=1:5, paste(c('lda', 'qda', 'cart', 'RF', "ada","logit")),  
 
 
 
+>>>>>>> origin/main
