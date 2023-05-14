@@ -11,7 +11,7 @@ Le jeu  de données est constitués d'informations sur la vie d'étudiants dans 
 
 L'objectif serait alors d'analyser le jeu de données afin de comprendre les facteurs qui impactent la réussite scolaire de ces étudiants. L'intérêt du jeu est la grande variété de facteurs proposée qui permet de courvrir un maximum d'hypothèsesn, notamment celle sur la consommation d'alcool proposée directement par le nom du jeu de données.
 
-Voici les variabales présentent dans ce jeu de données ; 
+Voici les variables présentent dans ce jeu de données ; 
 
 - **school** - student's school (binary: 'GP' - Gabriel Pereira or 'MS' - Mousinho da Silveira)
 - **sex** - student's sex (binary: 'F' - female or 'M' - male)
@@ -55,8 +55,8 @@ Voici les étapes que nous allons suivre :
 
 1. Identifier les variables significatives
 2. Appliquer des méthodes de classification sur la réussite scolaire
-2. Effectuer une regression linéaires pour prédire G3
-3. Comparer des méthodes de machine learning pour prédire G3
+2. Effectuer une regression linéaires pour prédire les notes/la réussite
+3. Comparer des méthodes de machine learning pour prédire les notes/la réussite
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -79,24 +79,89 @@ df = rbind(df.mat,df.por)
 head(df)
 ```
 
-## 2. Description des données
+## 2. Nettoyage et vérification des données
 
 Le jeu est composé de 33 variables dont 17 qualitatives et 16 quantitatives.
 On rajoute une variable en plus pour la réussite scolaire.
 
 
 ```{r}
-# print(str(df))
-# print(nrow(df))
+print(str(df))
+print(nrow(df))
+
+## On calcule la moyenne des étudiants
+df$Moy = (df$G1+df$G2+df$G3)/3
 
 ## On rajoute la réussite scolaire comme variable qualitative
-df$RS = factor(df$G3>=10)
+df$RS = factor(df$Moy>=10)
 head(df)
 
 ```
 
+# 3. Exploration des données : études des variables 
+
+Cette partie consiste à appliquer des méthodes de statistiques descriptives afin de mieux comprendre le jeu de données. 
+On se concentre sur l'analyse de la distribution des variables et leur corrélation avec les résultats scolaires.
+
+## Le sexe des étudiants
+
+D'après le diagramme, le dataset est plutôt équilibré en terme d'hommes et de femmes. 
+On étudie ensuite le lien entre le sexe et les notes en effectant une ANOVA1.
+D'après le test de Fisher, p-value > 5% donc il n'y a pas d'effet du sexe sur les notes.
+
 ```{r}
-res = PCA(df)
+S = table(df$sex)
+barplot(S)
+res = lm(Moy ~ sex,data=df)
+summary(res)
+
 ```
 
+## La taille de la famille
+
+On a deux fois plus de grandes familles que de petites familles.
+D'après le test de Fisher, il y a bien un impact  de taille de la famille sur les notes.
+
+```{r}
+Fam = table(df$famsize)
+barplot(Fam)
+summary(lm(Moy ~ famsize,data=df))
+
+```
+## Situation familliale : séparation des parents
+
+Le jeu est très déséquilibré : la grosse majorité des étudiants ont leur parents qui vivent ensemble.
+De plus, le test de Fisher indique que la situation familliale n'a pas d'impact sur les notes.
+
+```{r}
+barplot(table(df$Pstatus))
+summary(lm(Moy ~ Pstatus,data=df))
+```
+
+## Travail des parents
+
+Dans les deux cas, others et services sont les catégories qui dominent. Une différence notable est la que la proportion de femme au-foyer est bien plus élevée que celle des hommes.
+D'après le test de Fisher, le travail de la mère a un impact sur les notes, contrairement à celui du père.
+
+```{r}
+pie(table(df$Mjob))
+pie(table(df$Fjob))
+summary(lm(Moy ~ Medu+Fedu,data=df))
+```
+## Les raisons d'aller en cours
+
+D'après le digramme circulaire, seule "other" possède un petit effectif alors que "course" domine. Ainsi, les élèves vont majoritairement en cours car ils les apprécient. 
+D'après l'ANOVA1, il est clair que la raison d'aller en cours impacte les notes des étudiants (p-value < 5%). Cela paraît cohérent étant donné que cela détermine leur motivation à avoir de bonnes notes.
+
+```{r}
+pie(table(df$reason))
+summary(lm(Moy~ reason,data=df))
+```
+
+## Les relations
+
+```{r}
+pie(table(df$romantic))
+summary(lm(Moy~ romantic,data=df))
+```
 
