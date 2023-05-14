@@ -1258,7 +1258,7 @@ stepwise_lda=stepclass(RS~., data=df.train, method=&quot;lda&quot;, direction=&q
 ## method, : error(s) in modeling/prediction step</code></pre>
 <pre><code>## 
 ##  hr.elapsed min.elapsed sec.elapsed 
-##         0.0         0.0         2.4</code></pre>
+##        0.00        0.00        2.37</code></pre>
 <pre class="r"><code>stepwise_lda</code></pre>
 <pre><code>## method      : lda 
 ## final model : RS ~ school + sex + age + address + famsize + Pstatus + Medu + 
@@ -1266,7 +1266,7 @@ stepwise_lda=stepclass(RS~., data=df.train, method=&quot;lda&quot;, direction=&q
 ##     failures + schoolsup + famsup + paid + activities + nursery + 
 ##     higher + internet + romantic + famrel + freetime + goout + 
 ##     Dalc + Walc + health + absences
-## &lt;environment: 0x0000000022968688&gt;
+## &lt;environment: 0x00000000229120a0&gt;
 ## 
 ## correctness rate = 0</code></pre>
 <pre class="r"><code>res_stepwise_lda = lda(stepwise_lda$formula, data=df.train)
