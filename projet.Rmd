@@ -2,14 +2,16 @@
 title: "Projet Analyse de données"
 author: "Rudio et Léo-Paul"
 date: "2023-05-09"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 # Présentation du projet et du jeu de données
 
-Le jeu  de données est constitués d'informations sur la vie d'étudiants dans une université du Portugal. Ces informations vont de leur résultats universitaires, leur vie familiale à leur consommation d'alcool. Le jeu a été construit à partir d'une enquête menée auprès d'étudiant  en mathématiques et en portugais.
+Le jeu  de données est constitués d'informations sur la vie d'étudiants dans un lycée du Portugal. Ces informations vont de leur résultats universitaires, leur vie familiale à leur consommation d'alcool. Le jeu a été construit à partir d'une enquête menée auprès d'étudiant  en mathématiques et en portugais.
 
-L'objectif serait alors d'analyser le jeu de données afin de comprendre les facteurs qui impactent la réussite scolaire de ces étudiants. L'intérêt du jeu est la grande variété de facteurs proposée qui permet de courvrir un maximum d'hypothèsesn, notamment celle sur la consommation d'alcool proposée directement par le nom du jeu de données.
+L'objectif serait alors d'analyser le jeu de données afin de comprendre les facteurs qui impactent la réussite scolaire de ces étudiants. L'intérêt du jeu est la grande variété de facteurs proposée qui permet de couvrir un maximum d'hypothèsesn, notamment celle sur la consommation d'alcool proposée directement par le nom du jeu de données.
 
 Voici les variables présentent dans ce jeu de données ; 
 
@@ -49,19 +51,23 @@ These grades are related with the course subject, Math or Portuguese:
 - **G2** - second period grade (numeric: from 0 to 20)
 - **G3** - final grade (numeric: from 0 to 20, output target)
 
-Au cours de ce projet, nous nous concentrons sur la variable G3 qui est la variable de sortie représentant la note finale des élèves. Il s'agirait donc d'un problème de régression sur la variables G3 ou même plus généralement un problème de classification.
+Au cours de ce projet, nous nous concentrons sur la variable G3 qui est la variable de sortie représentant la note finale des élèves. Il s'agira donc d'un problème de classification sur la admission des élèves.
+En élève est admis s'il a une moyenne supérieure sur les 3 semestres supérieures à 10. On pourra également s'intérésser à mettre en place un modèle de régression pour prédire la moyenne des élèves.
 
 Voici les étapes que nous allons suivre : 
 
 1. Identifier les variables significatives
 2. Appliquer des méthodes de classification sur la réussite scolaire
-2. Effectuer une regression linéaires pour prédire les notes/la réussite
-3. Comparer des méthodes de machine learning pour prédire les notes/la réussite
+3. Effectuer une regression linéaires pour prédire la réussite
+4. Comparer des méthodes de machine learning pour prédire la réussite
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
 library(FactoMineR)
+library(pROC)
+library(MASS)
+library(randomForest)
 ```
 
 ## 1.Chargement des données
@@ -82,7 +88,7 @@ head(df)
 ## 2. Nettoyage et vérification des données
 
 Le jeu est composé de 33 variables dont 17 qualitatives et 16 quantitatives.
-On rajoute une variable en plus pour la réussite scolaire.
+On calcule la moyenne pour chaque élève, et on rajoute une variable pour la réussite scolaire.
 
 
 ```{r}
@@ -92,7 +98,7 @@ print(nrow(df))
 ## On calcule la moyenne des étudiants
 df$Moy = (df$G1+df$G2+df$G3)/3
 
-## On rajoute la réussite scolaire comme variable qualitative
+## On rajoute la réussite scolaire comme variable qualitative que nous devrons prédire.
 df$RS = factor(df$Moy>=10)
 head(df)
 
@@ -105,63 +111,420 @@ On se concentre sur l'analyse de la distribution des variables et leur corrélat
 
 ## Le sexe des étudiants
 
-D'après le diagramme, le dataset est plutôt équilibré en terme d'hommes et de femmes. 
+D'après le diagramme, le dataset est plutôt équilibré en terme d'hommes et de femmes,il y même plus de femmes que d'hommes dans ce lycées. 
 On étudie ensuite le lien entre le sexe et les notes en effectant une ANOVA1.
-D'après le test de Fisher, p-value > 5% donc il n'y a pas d'effet du sexe sur les notes.
+D'après le test de Fisher, p-value > 5% donc il n'y a pas d'effet du sexe sur les notes. D'après le test d'indépendances de Chi2 avec l'admission, le sexe des élèves n'a pas de lien avec leur réussite scolaire.
 
 ```{r}
-S = table(df$sex)
-barplot(S)
-res = lm(Moy ~ sex,data=df)
-summary(res)
+# Distribution
+barplot(table(df$sex),main="Répartion des sexes")
+
+# Lien avec la moyenne
+summary(lm(Moy ~ sex,data=df))
+
+# Lien avec la réussite
+chisq.test(df$sex,df$RS)
 
 ```
 
 ## La taille de la famille
 
 On a deux fois plus de grandes familles que de petites familles.
-D'après le test de Fisher, il y a bien un impact  de taille de la famille sur les notes.
+D'après le test de Fisher, il y a bien un impactde taille de la famille sur les notes. Le test d'indépendance avec la réussite indique cependant que la taille de la famille n'est pas liée à la réussite scolaire.
 
 ```{r}
-Fam = table(df$famsize)
-barplot(Fam)
+# Distribution
+barplot(table(df$famsize),main="Distribution de la taille de la famille")
+
+# Lien avec les notes
 summary(lm(Moy ~ famsize,data=df))
 
+# Lien avec la réussite
+chisq.test(df$famsize,df$RS)
 ```
 ## Situation familliale : séparation des parents
 
-Le jeu est très déséquilibré : la grosse majorité des étudiants ont leur parents qui vivent ensemble.
-De plus, le test de Fisher indique que la situation familliale n'a pas d'impact sur les notes.
+Le jeu est très déséquilibré au sujet de la situation famille : il y a 4 fois plus d'étudiants qui ont leurs parents qui vivent ensemble.
+De plus, le test de Fisher indique que la situation familliale n'a pas d'impact sur les notes. Le test de Chi2 soutient que le status des parents et la réussite scolaire sont indépendants.
 
 ```{r}
-barplot(table(df$Pstatus))
+# Distribution
+barplot(table(df$Pstatus),main="Distribution de la situation familiale")
+
+# Lien avec les notes
 summary(lm(Moy ~ Pstatus,data=df))
+
+# Lien avec la réussite
+chisq.test(df$Pstatus,df$RS)
 ```
 
 ## Travail des parents
 
 Dans les deux cas, others et services sont les catégories qui dominent. Une différence notable est la que la proportion de femme au-foyer est bien plus élevée que celle des hommes.
 D'après le test de Fisher, le travail de la mère a un impact sur les notes, contrairement à celui du père.
+Les résultats des test de Chis2 suivent les résultats des test de Fisher : le travail de la mère et la réussite scolaire sont bien corrélés mais celui du père n'a pas d'impact. 
 
 ```{r}
-pie(table(df$Mjob))
-pie(table(df$Fjob))
+#Distributions
+par(mfrow=c(1,2))
+barplot(table(df$Mjob),main="Distribution du travail de la mère")
+barplot(table(df$Fjob),main="Distribution du travail du père")
+
+# Lien avec les notes
 summary(lm(Moy ~ Medu+Fedu,data=df))
+
+# Lien avec la réussite
+chisq.test(df$Mjob,df$RS)
+chisq.test(df$Fjob,df$RS)
 ```
-## Les raisons d'aller en cours
+## Les raisons du choix d'école
 
 D'après le digramme circulaire, seule "other" possède un petit effectif alors que "course" domine. Ainsi, les élèves vont majoritairement en cours car ils les apprécient. 
 D'après l'ANOVA1, il est clair que la raison d'aller en cours impacte les notes des étudiants (p-value < 5%). Cela paraît cohérent étant donné que cela détermine leur motivation à avoir de bonnes notes.
+De la même manière, la raison est bien corrélé avec la réussite scolaire, ce qui parâit bien cohérent.
 
 ```{r}
-pie(table(df$reason))
+#  Distribution
+barplot(table(df$reason),main="Distribution des raisons d'aller étudier")
+
+# Lien avec les notes
 summary(lm(Moy~ reason,data=df))
+
+# Lien avec la réussite
+chisq.test(df$reason,df$RS)
 ```
 
 ## Les relations
 
+Il y a environ deux fois plus de jeunes célibataires que de jeunes en couple. 
+On peut penser qu'être en couple réduit le temps passé à étudier et rajoute des distractions, donc il devrait avoir un impact négatif sur les notes. D'après le test de Fisher, la p-value est fortement inférieure à 5%, donc on rejette H0: il y a bien un lien entre situation romantique et notes, ce qui rejoint bien l'idée de départ.
+Il serait donc intéréssant d'étudier la distribution des notes selon la situation romantique. D'après les boxplots, les différences sont assez minimes, même si on peut aperçevoir que les notes des célibataires sont légèrement meilleures.
+Cependant, la présence de relation amoureuse n'a pas d'impact sur la réussite scolaire. Ainsi, être en couple fait baisser la moyenne mais n'est pas un facteur d'échec.
+
 ```{r}
-pie(table(df$romantic))
+# Ditribution
+barplot(table(df$romantic),main="Distribution des personnes en couple")
+
+# Lien avec les notes
 summary(lm(Moy~ romantic,data=df))
+
+yes = df$Moy[df$romantic=='yes']
+no = df$Moy[df$romantic=='no']
+
+# Boxplot des notes
+par(mfrow=c(1,2))
+boxplot(no,main="no")
+boxplot(yes,main="yes")
+
+# Lien avec la réussite
+chisq.test(df$romantic,df$RS)
 ```
+
+## Volonté de faire des études supérieures
+
+On observe qu'au moins 80% des élèves veulent continuer leur études après le lycée, ce qui est plutôt rassurant. De plus, d'après le test de Fisher, les deux variables sont corrélées.
+On peut également annoncer que ceux qui veulent faire des études supérieures tendent à avoir de meilleures notes grâce au test unilatéral.
+A priori, la volonté de faire des études supérieures est corrélée à la réussite scolaire. Donc, ceux qui veulent poursuivre leurs études auront de meileures notes et tendance à ne pas être en échec.
+
+```{r}
+#Distribution
+barplot(table(df$higher),main="Distribution de l'envie de faire des études supérieures")
+
+# Lien avec les notes
+summary(lm(Moy ~ higher,data=df))
+
+yes = df$Moy[df$higher=='yes']
+no = df$Moy[df$higher=='no']
+
+# Boxplot des notes
+par(mfrow=c(1,2))
+hist(no,main="no")
+hist(yes,main="yes")
+
+# Lien avec la réussite
+chisq.test(df$higher,df$RS)
+```
+
+## Activités extrascolaires
+
+On a autant d'élèves qui pratiquent des activités extrascolaires que d'élèves qui n'en pratiquent pas, ce qui est plutôt intéréssant.
+De plus, le test de Fisher indique plutôt qu'il n'y a pas de liens entre les activités extrascolaires et les notes, ce qui est plutôt surprenant  étant donné que l'on aurait tendance à penser que les étudiants ayant des activités, ont moins de temps pour étudier. Dans la même lignée, les  activités sont plutôt indépendates de la réussite d'après le test de Chi2.
+
+```{r}
+# Distribution
+barplot(table(df$activities),main="Distribution de la pratique d'activités extrascolaires")
+
+# Lien avec les notes
+summary(lm(Moy ~ activities,data=df))
+
+# Lien avec la réussite
+chisq.test(df$activities,df$RS)
+```
+
+## Cours supplémentaires 
+
+Il y a bien plus d'élèves qui ne suivent pas de cours supplémentaires que d'élèves qui en suivent. Cett distributution est cohérente avec l'idée qu'on oeut se faire.
+Le test de Fisher indique plutôt  que les suivis de cours supplémentaires n'a pas d'impact sur la moyenne. Cependant, d'après le test du Chi2, le suivi de cours supplémentare est bien lié à la réussite scolaire.
+
+```{r}
+# Distribution
+barplot(table(df$paid),main="Distribution de la pratique des cours supplémentaires")
+
+# Lien avec la moyenne
+summary(lm(Moy ~ paid,data=df))
+
+# Lien avec la réussite
+chisq.test(df$paid,df$RS)
+```
+
+# 4. Machine Learning : Classification de la réussite scolare 
+
+Dans cette partie, nous nous concentrons sur la mise en place de méthodes de classification afin de prédire la variable RS (réussite scolaire).
+Nous nous intéresserons essentiellement à la comparaison des résultats de chacune des méthodes. Les méthodes utilisées seront évaluées avec leur accuracy et leur courbe ROC.
+
+## a) Séparation du jeu de données
+
+Ici, nous découpons notre dataset en jeu d'entraînement et jeu de test. Le ratio utilisé est $\frac{1}{5}$ pour le jeu de test.
+Tout d'abord on modifie notre jeu de données pour le préparer pour la classification en retirant les notes.
+
+
+```{r}
+# Suppresion des colonnes
+X = subset(df, select = -c(G1,G2,G3,Moy) )
+
+set.seed(1)
+n <- nrow(X)
+p <- ncol(X)-1
+test.ratio <- .2 # ratio of test/train samples
+n.test <- round(n*test.ratio)
+n.test
+tr <- sample(1:n,n.test)
+df.test <- X[tr,]
+df.train <- X[-tr,]
+```
+
+
+
+## b) LDA
+
+```{r}
+res_lda=lda(df.train$RS ~., data=df.train)
+pred_lda <- predict(res_lda,newdata=df.test)$posterior[,2] 
+
+# Table de confusion
+table(df.test$RS,predict(res_lda,newdata=df.test)$class)
+
+# Courbe ROC
+ROC_lda <- roc(df.test$RS, pred_lda)
+plot(ROC_lda, print.auc=TRUE,  print.auc.y = 0.5)
+ROC_lda$auc
+
+# Accuracy 
+accuracy_lda = mean(df.test$RS==predict(res_lda,newdata=df.test)$class)
+print("accuracy lda = ")
+print(accuracy_lda)
+```
+
+## c) QDA
+
+```{r}
+res_qda = qda(df.train$RS~., data=df.train)
+pred_qda <- predict(res_qda,newdata=df.test)$posterior[,2] 
+
+# Table de confusion
+table(df.test$RS,predict(res_qda,newdata=df.test)$class)
+
+# Courbe ROC
+ROC_qda <- roc(df.test$RS, pred_qda)
+plot(ROC_qda, print.auc=TRUE,  print.auc.y = 0.5)
+ROC_qda$auc
+
+# Accuracy 
+accuracy_qda = mean(df.test$RS==predict(res_qda,newdata=df.test)$class)
+print("accuracy qda = ")
+print(accuracy_qda)
+```
+
+## d) Stepwise
+
+```{r}
+library(klaR)
+stepwise_lda=stepclass(RS~., data=df.train, method="lda", direction="backward")
+stepwise_lda
+res_stepwise_lda = lda(stepwise_lda$formula, data=df.train)
+
+pred_lda_step <- predict(res_stepwise_lda,newdata=df.test)$posterior[,2] 
+
+# Table de confusion
+table(df.test$RS, predict(res_stepwise_lda,newdata=df.test)$class)
+
+# Courbe ROC
+ROC_lda_step <- roc(df.test$RS, pred_lda)
+plot(ROC_lda_step, print.auc=TRUE,  print.auc.y = 0.5)
+ROC_lda_step$auc
+
+# Accuracy 
+accuracy_lda_stepwise = mean(df.test$RS== predict(res_stepwise_lda,newdata=df.test)$class)
+print("accuracy lda stepwise = ")
+print(accuracy_lda_stepwise)
+```
+
+
+## e) Random Forest
+
+```{r}
+
+res_RF <- randomForest(RS~.,df.train)
+res_RF
+plot(res_RF)
+
+## prédiction :
+pred_RF <- predict(res_RF,newdata=df.test)
+
+## Table confusion et accuracy :
+table(df.test$RS, predict(res_RF,newdata=df.test,type="class"))
+
+## aire sous courbe ROC
+pred_RF = predict(res_RF, df.test, type="prob")[,2] 
+ROC_RF <- roc(df.test$RS, pred_RF)
+ROC_RF$auc
+
+## Accuracy
+accuracy_RF = mean(df.test$RS==predict(res_RF,newdata=df.test,type="class"))
+print("accuracy RF = ")
+print(accuracy_RF)
+
+```
+
+## f) CART
+
+```{r}
+library(rpart)
+library(rpart.plot)
+
+arbre = rpart(df.train$RS~.,df.train,control=rpart.control(minsplit=5,cp=0.025))
+cp.opt = arbre$cptable[which.min(arbre$cptable[, "xerror"]), "CP"]
+res_cart = prune(arbre,cp=cp.opt)
+rpart.plot(res_cart)
+
+## prédiction :
+pred_cart <- predict(res_cart,newdata=df.test)[,2] 
+
+## Table confusion et accuracy :
+table(df.test$RS, predict(res_cart,newdata=df.test,type="class"))
+
+## aire sous courbe ROC
+pred_cart = predict(res_cart, df.test, type="prob")[,2] 
+ROC_cart <- roc(df.test$RS, pred_cart)
+ROC_cart$auc
+
+## Accuracy
+accuracy_cart = mean(df.test$RS==predict(res_cart,newdata=df.test,type="class"))
+print("accuracy cart = ")
+print(accuracy_cart)
+```
+h) Adaboost
+
+```{r}
+library(gbm)
+
+fit.adaboost=gbm(as.numeric(RS)-1 ~., df.train, distribution = "adaboost")
+fit.adaboost
+
+### Calibrer B=n.tree par cross-validation : 
+fit.adaboost=gbm(as.numeric(RS)-1 ~., df.train, distribution = "adaboost",cv.folds = 5, shrinkage = 0.01, n.trees=3000)
+gbm.perf(fit.adaboost)
+B.opt = gbm.perf(fit.adaboost, method="cv")
+
+## prédiction : 
+pred_adaboost = predict(fit.adaboost, newdata=df.test, type = "response", n.trees = B.opt)
+class = 1*(pred_adaboost>1/2)
+
+## Table confusion et accuracy :
+table(df.test$RS, class)
+
+## Accuracy
+accuracy_adaboost = mean(as.numeric(df.test$RS)-1==class)
+print("accuracy adaboost = ")
+print(accuracy_adaboost)
+
+## aire sous courbe ROC
+ROC_adaboost <- roc(df.test$RS, pred_adaboost)
+ROC_adaboost$auc
+```
+## i) Regression Logistique
+
+```{r}
+
+### Modèle
+logit.train <- glm(RS ~ ., family = binomial , data=df.train)
+
+## prédiction :
+pred_logit <- predict(logit.train,newdata=df.test)
+class = 1*(pred_logit>1/2)
+
+## Table confusion et accuracy :
+table(df.test$RS, class)
+
+## aire sous courbe ROC
+ROC_logit <- roc(df.test$RS, pred_logit)
+
+## Accuracy
+accuracy_logit = mean(as.numeric(df.test$RS)-1==class)
+print("accuracy regression logistique = ")
+print(accuracy_logit)
+
+ROC_logit$auc
+```
+
+```{r}
+# # régression logistique Lasso
+# library(glmnet)
+# res_Lasso <- glmnet(as.matrix(df.train[,-1]),df.train$RS,family='binomial') 
+# plot(res_Lasso, label = TRUE)  # en abscisse : norme des coefficients
+# plot(res_Lasso, xvar = "lambda", label = TRUE) # en abscisse : log(lambda)
+# # sum(coef(res_Lasso, s=exp())!=0)
+# 
+# cvLasso <- cv.glmnet(as.matrix(df.train[,-1]),df.train$RS,family="binomial", type.measure = "class") 
+# plot(cvLasso)
+# cvLasso$lambda.min
+# coef(res_Lasso, s=cvLasso$lambda.min)
+# 
+# #prédiction
+# class_logit_lasso=predict(cvLasso, newx = as.matrix(df.test[,-1]), s = 'lambda.min', type = "class")
+# 
+# #Table de confusion et accuracy
+# table(df.test$RS, class_logit_lasso)
+# pred_logit_lasso=predict(cvLasso, newx = as.matrix(df.test[,-1]), s = 'lambda.min', type = "response")
+# 
+# accuracy_logit_lasso = mean(df.test$RS==class_logit_lasso)
+# print("accuracy regression logistique lasso= ")
+# print(accuracy_logit_lasso)
+# 
+# #pred_logit_lasso
+# ROC_logit_lasso = roc( df.test$RS, pred_logit_lasso)
+# ROC_logit_lasso$auc
+```
+
+## Comparaison
+
+```{r}
+result=matrix(NA, ncol=6, nrow=2)
+rownames(result)=c('accuracy', 'AUC')
+colnames(result)=c('lda', 'qda', 'cart', 'RF', "adaboost","logit")
+result[1,]= c(accuracy_lda, accuracy_qda, accuracy_cart, accuracy_RF,accuracy_adaboost,accuracy_logit)
+result[2,]=c(ROC_lda$auc, ROC_qda$auc, ROC_cart$auc, ROC_RF$auc,  ROC_adaboost$auc,ROC_logit$auc)
+result
+apply(result,1, which.max )
+
+plot(ROC_lda, xlim=c(1,0))
+plot(ROC_qda, add=TRUE, col=2)
+plot(ROC_cart, add=TRUE, col=3)
+plot(ROC_RF, add=TRUE, col=4)
+plot(ROC_adaboost, add=TRUE, col=5)
+plot(ROC_logit, add=TRUE, col=6)
+legend('bottom', col=1:5, paste(c('lda', 'qda', 'cart', 'RF', "ada","logit")),  lwd=1)
+```
+
+
 
