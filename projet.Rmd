@@ -1,16 +1,10 @@
 ---
-output:
-  pdf_document: default
-  html_document: default
----
-<<<<<<< HEAD
----
 title: "Projet Analyse de données"
 author: "Rudio et Léo-Paul"
 date: '2023-05-09'
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 # Présentation du projet et du jeu de données
@@ -73,6 +67,12 @@ library(FactoMineR)
 library(pROC)
 library(MASS)
 library(randomForest)
+library(gbm)
+library(gridExtra)
+library("dplyr")
+library(klaR)
+library(rpart)
+library(rpart.plot)
 ```
 
 ## 1.Chargement des données
@@ -114,7 +114,9 @@ head(df)
 Cette partie consiste à appliquer des méthodes de statistiques descriptives afin de mieux comprendre le jeu de données. 
 On se concentre sur l'analyse de la distribution des variables et leur corrélation avec les résultats scolaires.
 
-## Le sexe des étudiants
+## Les variables qualitatives
+
+### Le sexe des étudiants
 
 D'après le diagramme, le dataset est plutôt équilibré en terme d'hommes et de femmes,il y même plus de femmes que d'hommes dans ce lycées. 
 On étudie ensuite le lien entre le sexe et les notes en effectant une ANOVA1.
@@ -137,7 +139,7 @@ chisq.test(df$sex,df$RS)
 
 ```
 
-## La taille de la famille
+### La taille de la famille
 
 On a deux fois plus de grandes familles que de petites familles.
 D'après le test de Fisher, il y a bien un impactde taille de la famille sur les notes. Le test d'indépendance avec la réussite indique cependant que la taille de la famille n'est pas liée à la réussite scolaire.
@@ -150,21 +152,14 @@ ggplot(data = df, aes(x = famsize, fill = famsize)) +
        x = "Taille de la famille", y = "Nombre d'étudiants") +
   scale_fill_manual(values = c("#7570b3","#F0E442"))
 
-ggplot(data = df, aes(x = famsize)) +
-  geom_bar() +
-  labs(title = "Distribution de la taille de la famille",
-       x = "Taille de la famille", y = "Nombre d'étudiants")
-  
-
-#barplot(table(df$famsize),main="Distribution de la taille de la famille")
-
 # Lien avec les notes
 summary(lm(Moy ~ famsize,data=df))
 
 # Lien avec la réussite
 chisq.test(df$famsize,df$RS)
 ```
-## Situation familliale : séparation des parents
+
+### Situation familliale : séparation des parents
 
 Le jeu est très déséquilibré au sujet de la situation famille : il y a 4 fois plus d'étudiants qui ont leurs parents qui vivent ensemble.
 De plus, le test de Fisher indique que la situation familliale n'a pas d'impact sur les notes. Le test de Chi2 soutient que le status des parents et la réussite scolaire sont indépendants.
@@ -178,8 +173,6 @@ ggplot(data = df, aes(x = Pstatus, fill = Pstatus)) +
   labs(title = "Distribution de la situation conjugale des parents",
        x = "Situation conjugale", y = "Nombre d'étudiants")
 
-#barplot(table(df$Pstatus),main="Distribution de la situation familiale")
-
 # Lien avec les notes
 summary(lm(Moy ~ Pstatus,data=df))
 
@@ -187,7 +180,7 @@ summary(lm(Moy ~ Pstatus,data=df))
 chisq.test(df$Pstatus,df$RS)
 ```
 
-## Travail des parents
+### Travail des parents
 
 Dans les deux cas, others et services sont les catégories qui dominent. Une différence notable est la que la proportion de femme au-foyer est bien plus élevée que celle des hommes.
 D'après le test de Fisher, le travail de la mère a un impact sur les notes, contrairement à celui du père.
@@ -195,9 +188,6 @@ Les résultats des test de Chis2 suivent les résultats des test de Fisher : le 
 
 ```{r}
 #Distributions
-library(gridExtra)
-par(mfrow=c(1,2))
-
 g2=ggplot(data = df, aes(x = Mjob)) +
   geom_bar() +
   labs(title = "Distribution du travail de la mère") +
@@ -208,12 +198,7 @@ g1=ggplot(data = df, aes(x = Fjob)) +
   labs(title="Distribution du travail du père") +
   scale_fill_manual(values = c("#7570b3","#0072B2", "#E69F00", "#009E73", "#F0E442"))
 
-  
-
 grid.arrange(g1, g2, ncol = 2)
-
-#barplot(table(df$Mjob),main="Distribution du travail de la mère")
-#barplot(table(df$Fjob),main="Distribution du travail du père")
 
 # Lien avec les notes
 summary(lm(Moy ~ Medu+Fedu,data=df))
@@ -222,16 +207,14 @@ summary(lm(Moy ~ Medu+Fedu,data=df))
 chisq.test(df$Mjob,df$RS)
 chisq.test(df$Fjob,df$RS)
 ```
-## Les raisons du choix d'école
+### Les raisons du choix d'école
 
 D'après le digramme circulaire, seule "other" possède un petit effectif alors que "course" domine. Ainsi, les élèves vont majoritairement en cours car ils les apprécient. 
 D'après l'ANOVA1, il est clair que la raison d'aller en cours impacte les notes des étudiants (p-value < 5%). Cela paraît cohérent étant donné que cela détermine leur motivation à avoir de bonnes notes.
 De la même manière, la raison est bien corrélé avec la réussite scolaire, ce qui parâit bien cohérent.
 
 ```{r}
-#  Distribution
-#barplot(table(df$reason),main="Distribution des raisons d'aller étudier")
-
+# Distribution
 ggplot(data = df, aes(x = reason, fill = reason)) +
   geom_bar() +
   labs(title="Distribution du travail du père") +
@@ -244,7 +227,7 @@ summary(lm(Moy~ reason,data=df))
 chisq.test(df$reason,df$RS)
 ```
 
-## Les relations
+### Les relations
 
 Il y a environ deux fois plus de jeunes célibataires que de jeunes en couple. 
 On peut penser qu'être en couple réduit le temps passé à étudier et rajoute des distractions, donc il devrait avoir un impact négatif sur les notes. D'après le test de Fisher, la p-value est fortement inférieure à 5%, donc on rejette H0: il y a bien un lien entre situation romantique et notes, ce qui rejoint bien l'idée de départ.
@@ -272,18 +255,12 @@ gr2=ggplot(data = df, aes(x = romantic, y = Moy, fill = romantic)) +
        x = "Couple", y = "Notes")
 
 grid.arrange(gr1, gr2, ncol = 2)
-#barplot(table(df$romantic),main="Distribution des personnes en couple")
-
-# Boxplot des notes
-#par(mfrow=c(1,2))
-#boxplot(no,main="no")
-#boxplot(yes,main="yes")
 
 # Lien avec la réussite
 chisq.test(df$romantic,df$RS)
 ```
 
-## Volonté de faire des études supérieures
+### Volonté de faire des études supérieures
 
 On observe qu'au moins 80% des élèves veulent continuer leur études après le lycée, ce qui est plutôt rassurant. De plus, d'après le test de Fisher, les deux variables sont corrélées.
 On peut également annoncer que ceux qui veulent faire des études supérieures tendent à avoir de meilleures notes grâce au test unilatéral.
@@ -307,25 +284,17 @@ g2=ggplot(df, aes(x = higher, y = Moy, fill = higher)) +
 
 grid.arrange(g1, g2, ncol = 2)
 
-#Distribution
-#barplot(table(df$higher),main="Distribution de l'envie de faire des études supérieures")
-
 # Lien avec les notes
 summary(lm(Moy ~ higher,data=df))
 
 yes = df$Moy[df$higher=='yes']
 no = df$Moy[df$higher=='no']
 
-# Boxplot des notes
-#par(mfrow=c(1,2))
-#hist(no,main="no")
-#hist(yes,main="yes")
-
 # Lien avec la réussite
 chisq.test(df$higher,df$RS)
 ```
 
-## Activités extrascolaires
+### Activités extrascolaires
 
 On a autant d'élèves qui pratiquent des activités extrascolaires que d'élèves qui n'en pratiquent pas, ce qui est plutôt intéréssant.
 De plus, le test de Fisher indique plutôt qu'il n'y a pas de liens entre les activités extrascolaires et les notes, ce qui est plutôt surprenant  étant donné que l'on aurait tendance à penser que les étudiants ayant des activités, ont moins de temps pour étudier. Dans la même lignée, les  activités sont plutôt indépendates de la réussite d'après le test de Chi2.
@@ -339,8 +308,6 @@ ggplot(df, aes(x = activities, fill = activities)) +
        y = "Nombre d'étudiants") +
   scale_fill_manual(values = c("#0072B2", "#F0E442"))
 
-#barplot(table(df$activities),main="Distribution de la pratique d'activités extrascolaires")
-
 # Lien avec les notes
 summary(lm(Moy ~ activities,data=df))
 
@@ -348,7 +315,7 @@ summary(lm(Moy ~ activities,data=df))
 chisq.test(df$activities,df$RS)
 ```
 
-## Cours supplémentaires 
+### Cours supplémentaires 
 
 Il y a bien plus d'élèves qui ne suivent pas de cours supplémentaires que d'élèves qui en suivent. Cett distributution est cohérente avec l'idée qu'on oeut se faire.
 Le test de Fisher indique plutôt  que les suivis de cours supplémentaires n'a pas d'impact sur la moyenne. Cependant, d'après le test du Chi2, le suivi de cours supplémentare est bien lié à la réussite scolaire.
@@ -370,7 +337,237 @@ summary(lm(Moy ~ paid,data=df))
 chisq.test(df$paid,df$RS)
 ```
 
-# 4. Machine Learning : Classification de la réussite scolare 
+## Les variables quantitatives
+
+```{r}
+data=df
+data_quanti=data[c(3,7,8,13,14,15,25,26,27,28,29,30,31,32,33)]
+data_quanti_mat=df.mat[c(3,7,8,13,14,15,25,26,27,28,29,30,31,32,33)]
+data_quanti_por=df.por[c(3,7,8,13,14,15,25,26,27,28,29,30,31,32,33)]
+head(data_quanti)
+```
+
+
+### L'âge des élèves 
+
+```{r}
+
+attach(data_quanti)
+data_age=data_quanti
+
+data_age=summarise(group_by(data_age,age),n_obs=n()) #on groupe par âge avec le nombre de personnes dans chaque classe
+
+#création du camembert
+ggplot(data = data_age, aes(x = "", y = n_obs, fill = age)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  labs(title = "Répartition par âge toutes filière confondue")
+
+```
+La couleur la plus claire correspond à l'âge le plus grand (22 ans), dès que l'on passe à une couleur plus foncée, on diminue l'âge de 1. On voit clairement ici que la majorité des étudiants ont entre 15 et 19 ans. 
+
+
+
+```{r}
+data_age_mat=data_quanti_mat
+data_age_por=data_quanti_por
+
+data_age_mat=summarise(group_by(data_age_mat,age),n_obs_mat=n()) #on groupe par âge avec le nombre de personnes dans chaque classe
+data_age_por=summarise(group_by(data_age_por,age),n_obs_por=n())
+
+#création du camembert
+p1=ggplot(data = data_age_mat, aes(x = "", y = n_obs_mat, fill = age)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  labs(title = "Répartition par âge dans la section maths")
+
+p2=ggplot(data = data_age_por, aes(x = "", y = n_obs_por, fill = age)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  labs(title = "Répartition par âge dans la section portugais")
+
+grid.arrange(p1, p2, ncol = 2)
+```
+On voit que la répartiion semble être la grosiièrement la même, en effet:
+
+
+```{r}
+data_age_mat <- data_age_mat %>%
+  mutate(proportion = n_obs_mat / sum(n_obs_mat))
+
+data_age_por <- data_age_por %>%
+  mutate(proportion = n_obs_por / sum(n_obs_por))
+
+#on renome de la même manière les colonnes du nombre d'étudiants pour chaque obersvation
+data_age_mat$filiere=c(rep("math",nrow(data_age_mat)))
+data_age_por$filiere=c(rep("portugais",nrow(data_age_por)))
+colnames(data_age_mat)[colnames(data_age_mat) == "n_obs_mat"] <- "n_obs"
+colnames(data_age_por)[colnames(data_age_por) == "n_obs_por"] <- "n_obs"
+
+#on concatène les deux datas frame
+data_age=rbind(data_age_mat,data_age_por)
+
+#Création du graphique
+
+ggplot(data_age, aes(x = age, y = proportion, fill = filiere)) + 
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  labs(title = "Comparaison des âges dans chaque filière", x ="âge", y = "porportion d'étudiants au sein du groupe") +
+  scale_fill_manual(values = c("red", "blue")) 
+```
+On voit que la répartion d'âge est la même dans chaque filière
+
+### Quantité de travail
+
+```{r}
+data_stud=data_quanti
+data_stud=summarise(group_by(data_stud,studytime),n_obs=n()) #on groupe par temps d'étude par semaine 
+
+data_stud$studytime[data_stud$studytime == 1] <- "<2 hours"
+data_stud$studytime[data_stud$studytime == 2] <- "2 to 5 hours"
+data_stud$studytime[data_stud$studytime == 3] <- "5 to 10 hours"
+data_stud$studytime[data_stud$studytime == 4] <- ">10 hours"
+
+
+ggplot(data_stud, aes(x = "", y = n_obs, fill = factor(studytime))) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  labs(title = "Répartition des temps d'étude toutes filières confondues") +
+  scale_fill_discrete(name = "Temps d'étude", labels = c("<=2 hours", "2 to 5 hours", "5 to 10 hours", ">10 hours"))
+```
+
+On voit clairement que les étudiants travaillent majoritairement moins de 2h00 ou entre 5h00 et 10h00 par semaines.
+
+```{r}
+#creation data frame stud pour le groupe portugais
+data_stud_por=data_quanti_por
+data_stud_por=summarise(group_by(data_stud_por,studytime),n_obs_por=n()) #on groupe par temps d'étude par semaine 
+
+data_stud_por$studytime[data_stud_por$studytime == 1] <- "<2 hours"
+data_stud_por$studytime[data_stud_por$studytime == 2] <- "2 to 5 hours"
+data_stud_por$studytime[data_stud_por$studytime == 3] <- "5 to 10 hours"
+data_stud_por$studytime[data_stud_por$studytime == 4] <- ">10 hours"
+
+#creation data frame stud pour le groupe mat b
+data_stud_mat=data_quanti_mat
+data_stud_mat=summarise(group_by(data_stud_mat,studytime),n_obs_mat=n()) #on groupe par temps d'étude par semaine 
+
+data_stud_mat$studytime[data_stud_mat$studytime == 1] <- "<2 hours"
+data_stud_mat$studytime[data_stud_mat$studytime == 2] <- "2 to 5 hours"
+data_stud_mat$studytime[data_stud_mat$studytime == 3] <- "5 to 10 hours"
+data_stud_mat$studytime[data_stud_mat$studytime == 4] <- ">10 hours"
+
+#création des camemberts pour les deux sections
+p1=ggplot() +
+  # Premier camembert
+  geom_bar(data = data_stud_mat, aes(x = "", y = n_obs_mat, fill = factor(studytime)), stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  theme_void() +
+  labs(title = "Temps d'étude par semaine dans la section maths (à gauche) et portugaise (à droite)") 
+
+  # Deuxième camembert
+p2=ggplot() +
+  geom_bar(data = data_stud_por, aes(x = "", y = n_obs_por, fill = factor(studytime)), stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  theme_void() 
+
+grid.arrange(p1, p2, ncol = 2)
+data_stud_mat
+```
+
+On voit qu'il y a plus de personnes qui travaillent moins de deux heures par semaine dans la section portiguaise tandis qu'il y a moins de personnes qui travaillent plus de 10h00 dans cette même section. Le nombre d'étudiants travaillant entre 5 et 10 heures semble être a peu près le même. En effet:
+
+```{r}
+#on calcul la porportion pour pouvoir comparer
+data_stud_mat <- data_stud_mat %>%
+  mutate(proportion = n_obs_mat / sum(n_obs_mat))
+
+data_stud_por <- data_stud_por %>%
+  mutate(proportion = n_obs_por / sum(n_obs_por))
+
+#on renome de la même manière les colonnes du nombre d'étudiants pour chaque obersvation
+data_stud_mat$filiere=c(rep("math",nrow(data_stud_mat)))
+data_stud_por$filiere=c(rep("portugais",nrow(data_stud_por)))
+colnames(data_stud_mat)[colnames(data_stud_mat) == "n_obs_mat"] <- "n_obs"
+colnames(data_stud_por)[colnames(data_stud_por) == "n_obs_por"] <- "n_obs"
+
+#on concatène les deux datas frame
+data_stud=rbind(data_stud_mat,data_stud_por)
+
+#Création du graphique
+
+ggplot(data_stud, aes(x = studytime, y = proportion, fill = filiere)) + 
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  labs(title = "Comparaison du temps de travail entre deux filières", x = "Temps de travail par semaine", y = "Proportion d'étudiants au sein de chaque groupe") +
+  scale_fill_manual(values = c("red", "blue"))
+
+```
+
+On s'aperçoit donc que les élèves dans la filière mathématiques travaillent plus
+
+```{r}
+data_quanti$studytime[data_quanti$studytime == 1] <- "<2 hours"
+data_quanti$studytime[data_quanti$studytime == 2] <- "2 to 5 hours"
+data_quanti$studytime[data_quanti$studytime == 3] <- "5 to 10 hours"
+data_quanti$studytime[data_quanti$studytime == 4] <- ">10 hours"
+
+ggplot(data_quanti, aes(x = G3, y = studytime)) +
+  geom_boxplot() 
+```
+
+On voit que globalement, les élèves qui travaillent plus ont de meilleures notes (comportement bizarre à vérifier)
+
+### Absences des étudiants
+
+```{r}
+
+ggplot(df[df$address == 'U',], aes(x=absences)) +
+  geom_histogram(aes(y = ..count.. / sum(..count..)), binwidth=1, fill="steelblue", color="white") +
+  labs(title="Distribution des absences des étudiants vivants en ville",
+       x="Nombre d'absences", y="Proportion d'étudiants") +
+  theme_minimal()
+
+```
+
+### Santé des étudiants
+
+```{r}
+data_health=data_quanti
+data_health=summarise(group_by(data_health,health),n_obs=n())
+
+
+ggplot(data_health, aes(x = "", y = n_obs, fill = factor(health))) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  labs(title = "Santé des étudiants") +
+  scale_fill_discrete(name = "Niveau de santé", labels = c(1,2,3,4,5))
+
+```
+On voit que la plupart des étudiant sont en bonne santé
+
+
+```{r}
+data_quanti$health=factor(data_quanti$health)
+ggplot(data_quanti, aes(x = G3, y = health)) +
+  geom_boxplot() 
+
+
+```
+
+
+On voit que les étudiants en meilleure santé ont une meilleure réussite
+
+
+```{r}
+
+ggplot(df, aes(x = age, y = G3, color = paid)) +
+  geom_point(alpha = 0.7) +
+  facet_wrap(~paid) +
+  labs(title = "Distribution de l'âge et de la note finale en fonction cours particuliers et de l'âge",
+       x = "Âge", y = "Note finale")
+```
+Curieusement, les résultats semblent meilleur pour ceux qui n'on pas pris de cours
+
+# 4. Machine Learning : Classification de la réussite scolaire 
 
 Dans cette partie, nous nous concentrons sur la mise en place de méthodes de classification afin de prédire la variable RS (réussite scolaire).
 Nous nous intéresserons essentiellement à la comparaison des résultats de chacune des méthodes. Les méthodes utilisées seront évaluées avec leur accuracy et leur courbe ROC.
@@ -395,8 +592,6 @@ tr <- sample(1:n,n.test)
 df.test <- X[tr,]
 df.train <- X[-tr,]
 ```
-
-
 
 ## b) LDA
 
@@ -443,7 +638,6 @@ print(accuracy_qda)
 ## d) Stepwise
 
 ```{r}
-library(klaR)
 stepwise_lda=stepclass(RS~., data=df.train, method="lda", direction="backward")
 stepwise_lda
 res_stepwise_lda = lda(stepwise_lda$formula, data=df.train)
@@ -463,7 +657,6 @@ accuracy_lda_stepwise = mean(df.test$RS== predict(res_stepwise_lda,newdata=df.te
 print("accuracy lda stepwise = ")
 print(accuracy_lda_stepwise)
 ```
-
 
 ## e) Random Forest
 
@@ -494,8 +687,6 @@ print(accuracy_RF)
 ## f) CART
 
 ```{r}
-library(rpart)
-library(rpart.plot)
 
 arbre = rpart(df.train$RS~.,df.train,control=rpart.control(minsplit=5,cp=0.025))
 cp.opt = arbre$cptable[which.min(arbre$cptable[, "xerror"]), "CP"]
@@ -518,10 +709,10 @@ accuracy_cart = mean(df.test$RS==predict(res_cart,newdata=df.test,type="class"))
 print("accuracy cart = ")
 print(accuracy_cart)
 ```
+
 h) Adaboost
 
 ```{r}
-library(gbm)
 
 fit.adaboost=gbm(as.numeric(RS)-1 ~., df.train, distribution = "adaboost")
 fit.adaboost
@@ -621,213 +812,150 @@ plot(ROC_logit, add=TRUE, col=6)
 legend('bottom', col=1:5, paste(c('lda', 'qda', 'cart', 'RF', "ada","logit")),  lwd=1)
 
 ```
-
-##Partie variablr quantitative 
+##ACP
 
 ```{r}
-data=df
-data_quanti=data[c(3,7,8,13,14,15,25,26,27,28,29,30,31,32,33)]
-data_quanti_mat=df.mat[c(3,7,8,13,14,15,25,26,27,28,29,30,31,32,33)]
-data_quanti_por=df.por[c(3,7,8,13,14,15,25,26,27,28,29,30,31,32,33)]
+data_quanti=df[,c(3,13,14,15,31,32,33,34)]
 head(data_quanti)
 ```
+On va par la suite transformer lorsque cela est possible certaines variables qualitatives en variables quantitatives afin de pouvoir réaliser une ACP dessus. Pour les variables studytime et traveltime, des intervalles nous sont données, on prend donc pour chaque niveau le millieu de l'intervalle. Pour les valeurs extrèmes, 1 et 4, on choisit arbitrairement une borne supèrieure ou inférieure (15H00 pour studytime et 3h00 pour traveltime pour ce qu'il s'agit des bornes supérieures et 0h00 pour les deux bornes inférieures)
 ```{r}
-library(ggplot2)
-library("dplyr")
-
-attach(data_quanti)
-data_age=data_quanti
-
-data_age=summarise(group_by(data_age,age),n_obs=n()) #on groupe par âge avec le nombre de personnes dans chaque classe
-
-#création du camembert
-ggplot(data = data_age, aes(x = "", y = n_obs, fill = age)) +
-  geom_bar(stat = "identity", width = 1) +
-  coord_polar(theta = "y") +
-  labs(title = "Répartition par âge toutes filière confondue")
-
-```
-La couleur la plus claire correspond à l'âge le plus grand (22 ans), dès que l'on passe à une couleur plus foncée, on diminue l'âge de 1. On voit clairement ici que la majorité des étudiants ont entre 15 et 19 ans. 
-
-```{r}
-data_age_mat=data_quanti_mat
-data_age_por=data_quanti_por
-
-data_age_mat=summarise(group_by(data_age_mat,age),n_obs_mat=n()) #on groupe par âge avec le nombre de personnes dans chaque classe
-data_age_por=summarise(group_by(data_age_por,age),n_obs_por=n())
-
-#création du camembert
-p1=ggplot(data = data_age_mat, aes(x = "", y = n_obs_mat, fill = age)) +
-  geom_bar(stat = "identity", width = 1) +
-  coord_polar(theta = "y") +
-  labs(title = "Répartition par âge dans la section maths")
-
-p2=ggplot(data = data_age_por, aes(x = "", y = n_obs_por, fill = age)) +
-  geom_bar(stat = "identity", width = 1) +
-  coord_polar(theta = "y") +
-  labs(title = "Répartition par âge dans la section portugais")
-
-
-library(gridExtra)
-grid.arrange(p1, p2, ncol = 2)
+#on convertit studytime et travel time en variables quantitatives (on prend le millieux des segments)
+for (i in 1:nrow(data_quanti)){
+  if (data_quanti$studytime[i]==2){
+    data_quanti$studytime[i]=210
+  }
+   if (data_quanti$studytime[i]==1){
+    data_quanti$studytime[i]=120
+   }
+   if (data_quanti$studytime[i]==3){
+    data_quanti$studytime[i]=450
+   }
+   if (data_quanti$studytime[i]==4){
+    data_quanti$studytime[i]=750
+   }
+  if(data_quanti$traveltime[i]==1){
+    data_quanti$traveltime[i]=7.5
+  }
+   if(data_quanti$traveltime[i]==2){
+    data_quanti$traveltime[i]=22.5
+   }
+   if(data_quanti$traveltime[i]==3){
+    data_quanti$traveltime[i]=45
+   }
+   if(data_quanti$traveltime[i]==4){
+    data_quanti$traveltime[i]=120
+  }
+  
+  
+}
+head(data_quanti)
 ```
 
 ```{r}
-data_age_mat <- data_age_mat %>%
-  mutate(proportion = n_obs_mat / sum(n_obs_mat))
-
-data_age_por <- data_age_por %>%
-  mutate(proportion = n_obs_por / sum(n_obs_por))
-
-#on renome de la même manière les colonnes du nombre d'étudiants pour chaque obersvation
-data_age_mat$filiere=c(rep("math",nrow(data_age_mat)))
-data_age_por$filiere=c(rep("portugais",nrow(data_age_por)))
-colnames(data_age_mat)[colnames(data_age_mat) == "n_obs_mat"] <- "n_obs"
-colnames(data_age_por)[colnames(data_age_por) == "n_obs_por"] <- "n_obs"
-
-#on concatène les deux datas frame
-data_age=rbind(data_age_mat,data_age_por)
-
-#Création du graphique
-
-ggplot(data_age, aes(x = age, y = proportion, fill = filiere)) + 
-  geom_bar(stat = "identity", position = position_dodge()) + 
-  labs(title = "Comparaison des âges dans chaque filière", x ="âge", y = "porportion d'étudiants au sein du groupe") +
-  scale_fill_manual(values = c("red", "blue")) 
+res=PCA(data_quanti)
 ```
-On voit que la répartion d'âge est la même dans chaque filière
+On voit que les variables study time et travel time sont mal projetées, on ne peut donc pas les interprétes. De manière logique on retrouve que les élèves ayant une bonne moyenne ont eu un bonne note à chaque semestres Vers la gauche se trouvent les paramètres ayant une influence négatives que la moyenne comme les echecs et plus curieusement l'âge (peut être sagit il des personnes ayant redoubler).
 ```{r}
-data_stud=data_quanti
-data_stud=summarise(group_by(data_stud,studytime),n_obs=n()) #on groupe par temps d'étude par semaine 
-
-data_stud$studytime[data_stud$studytime == 1] <- "<2 hours"
-data_stud$studytime[data_stud$studytime == 2] <- "2 to 5 hours"
-data_stud$studytime[data_stud$studytime == 3] <- "5 to 10 hours"
-data_stud$studytime[data_stud$studytime == 4] <- ">10 hours"
-
-
-ggplot(data_stud, aes(x = "", y = n_obs, fill = factor(studytime))) +
-  geom_bar(stat = "identity", width = 1) +
-  coord_polar(theta = "y") +
-  labs(title = "Répartition des temps d'étude toutes filières confondues") +
-  scale_fill_discrete(name = "Temps d'étude", labels = c("<=2 hours", "2 to 5 hours", "5 to 10 hours", ">10 hours"))
+res$eig
 ```
-
-On voit clairement que les étudiants travaillent majoritairement moins de 2h00 ou entre 5h00 et 10h00 par semaines.
+On ne garde que deux dimensions ici, d'ou l'analyse ci dessus
+```{r}
+plot(res, select="cos2 0.8", habillage=3, cex=0.9,choix="ind")#on visualise le temps de travail
+```
+On retrouve bien  que les personnes ayant le plus travaillé se situé di coté des bonnes notes.
 
 ```{r}
-#creation data frame stud pour le groupe portugais
-data_stud_por=data_quanti_por
-data_stud_por=summarise(group_by(data_stud_por,studytime),n_obs_por=n()) #on groupe par temps d'étude par semaine 
-
-data_stud_por$studytime[data_stud_por$studytime == 1] <- "<2 hours"
-data_stud_por$studytime[data_stud_por$studytime == 2] <- "2 to 5 hours"
-data_stud_por$studytime[data_stud_por$studytime == 3] <- "5 to 10 hours"
-data_stud_por$studytime[data_stud_por$studytime == 4] <- ">10 hours"
-
-#creation data frame stud pour le groupe mat b
-data_stud_mat=data_quanti_mat
-data_stud_mat=summarise(group_by(data_stud_mat,studytime),n_obs_mat=n()) #on groupe par temps d'étude par semaine 
-
-data_stud_mat$studytime[data_stud_mat$studytime == 1] <- "<2 hours"
-data_stud_mat$studytime[data_stud_mat$studytime == 2] <- "2 to 5 hours"
-data_stud_mat$studytime[data_stud_mat$studytime == 3] <- "5 to 10 hours"
-data_stud_mat$studytime[data_stud_mat$studytime == 4] <- ">10 hours"
-
-library(gridExtra)
-
-#création des camemberts pour les deux sections
-p1=ggplot() +
-  # Premier camembert
-  geom_bar(data = data_stud_mat, aes(x = "", y = n_obs_mat, fill = factor(studytime)), stat = "identity", width = 1) +
-  coord_polar(theta = "y") +
-  theme_void() +
-  labs(title = "Temps d'étude par semaine dans la section maths (à gauche) et portugaise (à droite)") 
-
-  # Deuxième camembert
-p2=ggplot() +
-  geom_bar(data = data_stud_por, aes(x = "", y = n_obs_por, fill = factor(studytime)), stat = "identity", width = 1) +
-  coord_polar(theta = "y") +
-  theme_void() 
-
-grid.arrange(p1, p2, ncol = 2)
-data_stud_mat
+plot(res, select="cos2 0.8", habillage=2, cex=0.9,choix="ind")#visualisation du temps de trajet
 ```
-On voit qu'il y a plus de personnes qui travaillent moins de deux heures par semaine dans la section portiguaise tandis qu'il y a moins de personnes qui travaillent plus de 10h00 dans cette même section. Le nombre d'étudiants travaillant entre 5 et 10 heures semble être a peu près le même. En effet:
+De la même manière on voit que le temps de trajet a un influence négative sur la réussite.
 ```{r}
-#on calcul la porportion pour pouvoir comparer
-data_stud_mat <- data_stud_mat %>%
-  mutate(proportion = n_obs_mat / sum(n_obs_mat))
-
-data_stud_por <- data_stud_por %>%
-  mutate(proportion = n_obs_por / sum(n_obs_por))
-
-#on renome de la même manière les colonnes du nombre d'étudiants pour chaque obersvation
-data_stud_mat$filiere=c(rep("math",nrow(data_stud_mat)))
-data_stud_por$filiere=c(rep("portugais",nrow(data_stud_por)))
-colnames(data_stud_mat)[colnames(data_stud_mat) == "n_obs_mat"] <- "n_obs"
-colnames(data_stud_por)[colnames(data_stud_por) == "n_obs_por"] <- "n_obs"
-
-#on concatène les deux datas frame
-data_stud=rbind(data_stud_mat,data_stud_por)
-
-#Création du graphique
-
-ggplot(data_stud, aes(x = studytime, y = proportion, fill = filiere)) + 
-  geom_bar(stat = "identity", position = position_dodge()) + 
-  labs(title = "Comparaison du temps de travail entre deux filières", x = "Temps de travail par semaine", y = "Proportion d'étudiants au sein de chaque groupe") +
-  scale_fill_manual(values = c("red", "blue"))
-
+plot(res, select="cos2 0.8", habillage=4, cex=0.9,choix="ind")#visualisation des échecs
 ```
-On s'aperçoit donc que les élèves dans la filière mathématiques travaillent plus
+On voit aussi que les élèves qui ont les meilleurs résulats sont ceux qui ont le moins d'échecs.
+Par ailleurs l'acp ici ne semble pas très pertinente car la plupart des variables du jeu de données sont quantitatives, nous avons donc été obligés de les rendre (lorsque cela a un sens) qualitatives. Néeanmoins on voit par exemple que pour ces variables transformées, leur projection est très mauvaise et ne peuvent donc pas être interprétes à l'aide de l'ACP (comme studytime et traveltime). Egalement peut être qu'il y a une meilleure de les rendres qualitatives. C'est pour quoi l'on va réaliser par la suite un anova 2 sur les variables quatitatives studytime et traveltime afin de pouvoir expliqués la variable Moy avec.
+##Anova 2 sur les variables studytime et traveltime
 ```{r}
-data_quanti$studytime[data_quanti$studytime == 1] <- "<2 hours"
-data_quanti$studytime[data_quanti$studytime == 2] <- "2 to 5 hours"
-data_quanti$studytime[data_quanti$studytime == 3] <- "5 to 10 hours"
-data_quanti$studytime[data_quanti$studytime == 4] <- ">10 hours"
-
-ggplot(data_quanti, aes(x = G3, y = studytime)) +
-  geom_boxplot() 
+#création de la data frame correspondante
+data_anova=df[,c(13,14,34)]
+data_anova$traveltime=factor(data_anova$traveltime)
+data_anova$studytime=factor(data_anova$studytime)
+attach(data_anova)
+head(data_anova)
 ```
-On voit que globalement, les élèves qui travaillent plus on de meilleures notes (comportement bizarre à vérifier)
 
 ```{r}
-#oui rudio j'ai fait un truc avec de qualis 
-
-ggplot(df[df$address == 'U',], aes(x=absences)) +
-  geom_histogram(aes(y = ..count.. / sum(..count..)), binwidth=1, fill="steelblue", color="white") +
-  labs(title="Distribution des absences des étudiants vivants en ville",
-       x="Nombre d'absences", y="Proportion d'étudiants") +
-  theme_minimal()
-
+table(data_anova$traveltime,data_anova$studytime)
+```
+Le plan est trop désiquilibré pour faire un anova
+##Anova 2 sur les variables romantic et Walc
+```{r}
+#création de la data frame correspondante
+head(df)
+data_anova=df[,c(28,23,34)]
+data_anova$Walc=factor(data_anova$Walc)
+head(data_anova)
 ```
 ```{r}
-data_health=data_quanti
-data_health=summarise(group_by(data_health,health),n_obs=n())
-
-
-ggplot(data_health, aes(x = "", y = n_obs, fill = factor(health))) +
-  geom_bar(stat = "identity", width = 1) +
-  coord_polar(theta = "y") +
-  labs(title = "Santé des étudiants") +
-  scale_fill_discrete(name = "Niveau de santé", labels = c(1,2,3,4,5))
-
+table(data_anova$Walc,data_anova$romantic)
 ```
-On voit que la plupart des étudiant sont en bonne santé
+Le modèle est complet et n'est pas trop désiquilibré.
 ```{r}
-data_quanti$health=factor(data_quanti$health)
-ggplot(data_quanti, aes(x = G3, y = health)) +
-  geom_boxplot() 
-
-
+res=lm(Moy~romantic*Walc,data_anova)
+par(mfrow=c(2,2))
+plot(res)
 ```
-On voit que les étudiants en meilleure santé ont une meilleure réussite
+```{r}
+shapiro.test(res$residuals)
+```
+Les données ne sont pas du tout gaussiennes.
+
+```{r}
+head(df)
+data_anova=df[c(34,18,22)]
+head(data_anova)
+```
+```{r}
+table(data_anova$internet,data_anova$paid)
+```
+Le plan est complet et quasiment équilibré
+```{r}
+res=lm(Moy~internet*paid,data_anova)
+par(mfrow=c(2,2))
+plot(res)
+```
+```{r}
+shapiro.test(res$residuals)
+```
+On obtiens encore que les données ne sont pas gaussiennes
+
+
+
+##Modèle linéaire Gaussien: Régréssion mutliple
+
+```{r}
+library(car) #pour utiliser VIF
+reg=lm(Moy~.,data_quanti)#regression multiple pour utiliser VIF 
+vif(reg)#test de colinéarité 
+```
+Aucune valeur n'est plsu grande que 10, la matrice est donc de plein rang. On va maintenant vérifier si les résidus sont iid, gaussiens centrée et réduits
+```{r}
+par(mfrow=c(2,2))
+plot(reg)
+```
+On voit qu'il n'y a pas de forme de trompette sur le graphe des résidus don l'hypoithèse d'homoscedasticité est vérifiée. Néanmoins il semble y avoir plusieurs points avec des résidus trop grands. 
+```{r}
+abs(rstudent(reg))[abs(rstudent(reg))>2]
+```
+En effet, on voit qu'il y en a huit. Il faudrais enlever le point le plus éloigé. Néanmoins, on voit en regardant le qqplot nos variables n'ont aucune chance d'être gaussiennes. En effet, avec la p-valeur du test de shapiro qui est très petite devant 5%, on rejette H0, les données ne sont donc pas gausssiennes. Le modèle n'est donc pas adpaté.
+```{r}
+shapiro.test(reg$residuals)
+```
 ```{r}
 
-ggplot(df, aes(x = age, y = G3, color = paid)) +
-  geom_point(alpha = 0.7) +
-  facet_wrap(~paid) +
-  labs(title = "Distribution de l'âge et de la note finale en fonction cours particuliers et de l'âge",
-       x = "Âge", y = "Note finale")
 ```
-Curieusement, les résultats semblent meilleur pour ceux qui n'on pas pris de cours
+
+
+
+
+
