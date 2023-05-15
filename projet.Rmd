@@ -388,7 +388,7 @@ p2=ggplot(data = data_age_por, aes(x = "", y = n_obs_por, fill = age)) +
 
 grid.arrange(p1, p2, ncol = 2)
 ```
-
+On voit que la répartiion semble être la grosiièrement la même, en effet:
 
 
 ```{r}
@@ -567,7 +567,7 @@ ggplot(df, aes(x = age, y = G3, color = paid)) +
 ```
 Curieusement, les résultats semblent meilleur pour ceux qui n'on pas pris de cours
 
-# 4. Machine Learning : Classification de la réussite scolare 
+# 4. Machine Learning : Classification de la réussite scolaire 
 
 Dans cette partie, nous nous concentrons sur la mise en place de méthodes de classification afin de prédire la variable RS (réussite scolaire).
 Nous nous intéresserons essentiellement à la comparaison des résultats de chacune des méthodes. Les méthodes utilisées seront évaluées avec leur accuracy et leur courbe ROC.
@@ -812,4 +812,150 @@ plot(ROC_logit, add=TRUE, col=6)
 legend('bottom', col=1:5, paste(c('lda', 'qda', 'cart', 'RF', "ada","logit")),  lwd=1)
 
 ```
+##ACP
+
+```{r}
+data_quanti=df[,c(3,13,14,15,31,32,33,34)]
+head(data_quanti)
+```
+On va par la suite transformer lorsque cela est possible certaines variables qualitatives en variables quantitatives afin de pouvoir réaliser une ACP dessus. Pour les variables studytime et traveltime, des intervalles nous sont données, on prend donc pour chaque niveau le millieu de l'intervalle. Pour les valeurs extrèmes, 1 et 4, on choisit arbitrairement une borne supèrieure ou inférieure (15H00 pour studytime et 3h00 pour traveltime pour ce qu'il s'agit des bornes supérieures et 0h00 pour les deux bornes inférieures)
+```{r}
+#on convertit studytime et travel time en variables quantitatives (on prend le millieux des segments)
+for (i in 1:nrow(data_quanti)){
+  if (data_quanti$studytime[i]==2){
+    data_quanti$studytime[i]=210
+  }
+   if (data_quanti$studytime[i]==1){
+    data_quanti$studytime[i]=120
+   }
+   if (data_quanti$studytime[i]==3){
+    data_quanti$studytime[i]=450
+   }
+   if (data_quanti$studytime[i]==4){
+    data_quanti$studytime[i]=750
+   }
+  if(data_quanti$traveltime[i]==1){
+    data_quanti$traveltime[i]=7.5
+  }
+   if(data_quanti$traveltime[i]==2){
+    data_quanti$traveltime[i]=22.5
+   }
+   if(data_quanti$traveltime[i]==3){
+    data_quanti$traveltime[i]=45
+   }
+   if(data_quanti$traveltime[i]==4){
+    data_quanti$traveltime[i]=120
+  }
+  
+  
+}
+head(data_quanti)
+```
+
+```{r}
+res=PCA(data_quanti)
+```
+On voit que les variables study time et travel time sont mal projetées, on ne peut donc pas les interprétes. De manière logique on retrouve que les élèves ayant une bonne moyenne ont eu un bonne note à chaque semestres Vers la gauche se trouvent les paramètres ayant une influence négatives que la moyenne comme les echecs et plus curieusement l'âge (peut être sagit il des personnes ayant redoubler).
+```{r}
+res$eig
+```
+On ne garde que deux dimensions ici, d'ou l'analyse ci dessus
+```{r}
+plot(res, select="cos2 0.8", habillage=3, cex=0.9,choix="ind")#on visualise le temps de travail
+```
+On retrouve bien  que les personnes ayant le plus travaillé se situé di coté des bonnes notes.
+
+```{r}
+plot(res, select="cos2 0.8", habillage=2, cex=0.9,choix="ind")#visualisation du temps de trajet
+```
+De la même manière on voit que le temps de trajet a un influence négative sur la réussite.
+```{r}
+plot(res, select="cos2 0.8", habillage=4, cex=0.9,choix="ind")#visualisation des échecs
+```
+On voit aussi que les élèves qui ont les meilleurs résulats sont ceux qui ont le moins d'échecs.
+Par ailleurs l'acp ici ne semble pas très pertinente car la plupart des variables du jeu de données sont quantitatives, nous avons donc été obligés de les rendre (lorsque cela a un sens) qualitatives. Néeanmoins on voit par exemple que pour ces variables transformées, leur projection est très mauvaise et ne peuvent donc pas être interprétes à l'aide de l'ACP (comme studytime et traveltime). Egalement peut être qu'il y a une meilleure de les rendres qualitatives. C'est pour quoi l'on va réaliser par la suite un anova 2 sur les variables quatitatives studytime et traveltime afin de pouvoir expliqués la variable Moy avec.
+##Anova 2 sur les variables studytime et traveltime
+```{r}
+#création de la data frame correspondante
+data_anova=df[,c(13,14,34)]
+data_anova$traveltime=factor(data_anova$traveltime)
+data_anova$studytime=factor(data_anova$studytime)
+attach(data_anova)
+head(data_anova)
+```
+
+```{r}
+table(data_anova$traveltime,data_anova$studytime)
+```
+Le plan est trop désiquilibré pour faire un anova
+##Anova 2 sur les variables romantic et Walc
+```{r}
+#création de la data frame correspondante
+head(df)
+data_anova=df[,c(28,23,34)]
+data_anova$Walc=factor(data_anova$Walc)
+head(data_anova)
+```
+```{r}
+table(data_anova$Walc,data_anova$romantic)
+```
+Le modèle est complet et n'est pas trop désiquilibré.
+```{r}
+res=lm(Moy~romantic*Walc,data_anova)
+par(mfrow=c(2,2))
+plot(res)
+```
+```{r}
+shapiro.test(res$residuals)
+```
+Les données ne sont pas du tout gaussiennes.
+
+```{r}
+head(df)
+data_anova=df[c(34,18,22)]
+head(data_anova)
+```
+```{r}
+table(data_anova$internet,data_anova$paid)
+```
+Le plan est complet et quasiment équilibré
+```{r}
+res=lm(Moy~internet*paid,data_anova)
+par(mfrow=c(2,2))
+plot(res)
+```
+```{r}
+shapiro.test(res$residuals)
+```
+On obtiens encore que les données ne sont pas gaussiennes
+
+
+
+##Modèle linéaire Gaussien: Régréssion mutliple
+
+```{r}
+library(car) #pour utiliser VIF
+reg=lm(Moy~.,data_quanti)#regression multiple pour utiliser VIF 
+vif(reg)#test de colinéarité 
+```
+Aucune valeur n'est plsu grande que 10, la matrice est donc de plein rang. On va maintenant vérifier si les résidus sont iid, gaussiens centrée et réduits
+```{r}
+par(mfrow=c(2,2))
+plot(reg)
+```
+On voit qu'il n'y a pas de forme de trompette sur le graphe des résidus don l'hypoithèse d'homoscedasticité est vérifiée. Néanmoins il semble y avoir plusieurs points avec des résidus trop grands. 
+```{r}
+abs(rstudent(reg))[abs(rstudent(reg))>2]
+```
+En effet, on voit qu'il y en a huit. Il faudrais enlever le point le plus éloigé. Néanmoins, on voit en regardant le qqplot nos variables n'ont aucune chance d'être gaussiennes. En effet, avec la p-valeur du test de shapiro qui est très petite devant 5%, on rejette H0, les données ne sont donc pas gausssiennes. Le modèle n'est donc pas adpaté.
+```{r}
+shapiro.test(reg$residuals)
+```
+```{r}
+
+```
+
+
+
+
 
