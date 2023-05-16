@@ -3,8 +3,8 @@ title: "Projet Analyse de données"
 author: "Rudio et Léo-Paul"
 date: '2023-05-09'
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 # Présentation du projet et du jeu de données
@@ -77,6 +77,8 @@ library(rpart.plot)
 
 ## 1.Chargement des données
 
+Le dataset est composé de 2 fichiers csv représentant les élèves de portugais et de maths. Il faut donc concaténer les deux jeux de données pour obtenir le jeu final. On peut noter qu'il y a 382 élèves qui suivent les deux cours.
+
 ```{r}
 # Chargement de la base de données
 df.mat=read.table("student-mat.csv",sep=",",header=TRUE,as.is = FALSE)
@@ -92,13 +94,21 @@ head(df)
 
 ## 2. Nettoyage et vérification des données
 
-Le jeu est composé de 33 variables dont 17 qualitatives et 16 quantitatives.
-On calcule la moyenne pour chaque élève, et on rajoute une variable pour la réussite scolaire.
+On transforme les variables qualitatives en factor et on vérifie que le jeu ne contient pas de NaN.
 
+Pour préparer les données, on calcule la moyenne pour chaque élève (variable Moy), et on rajoute une variable pour la réussite scolaire (variable RS).
+On garde 3 modalités différentes pour la Réussite scolare :
+
+1. "admis" pour des Moyennes supérieures à 10
+2. "Redoublement" pour des Moyennes entre 8.50 et 10
+3. "Exclusion" pour des Moyennes inférieures à 8.50
+
+On a choisi, cette séparation étant donné qu'elle est plus intéréssante à étudier qu'une simple variable binaire (on a essayé).
 
 ```{r}
 print(str(df))
 print(nrow(df))
+print(is.na(df))
 
 # factor
 # df$famrel=factor(df$famrel)
@@ -116,12 +126,11 @@ df$health=factor(df$health)
 df$Moy = (df$G1+df$G2+df$G3)/3
 
 ## On rajoute la réussite scolaire comme variable qualitative que nous devrons prédire.
-# df$RS = factor(df$Moy>=10)
 df$RS = "admis"
-# df$RS[df$Moy<10]="admis par conseil"
 df$RS[df$Moy<10]="redoublement"
 df$RS[df$Moy<8.50]="exclusion"
 df$RS=factor(df$RS)
+
 head(df)
 
 
@@ -129,8 +138,7 @@ head(df)
 
 # 3. Exploration des données : études des variables 
 
-Cette partie consiste à appliquer des méthodes de statistiques descriptives afin de mieux comprendre le jeu de données. 
-On se concentre sur l'analyse de la distribution des variables et leur corrélation avec les résultats scolaires.
+Cette partie consiste à appliquer des méthodes de statistiques descriptives afin de mieux comprendre le jeu de données et d'analyser les  variables qui nous semblent intéréssantes. Pour l'analyse des variables, on se concentre sur leur corrélation avec les résultats scolaires et la moyenne afin d'identifier les variables significatives.
 
 ## Les variables qualitatives
 
@@ -208,13 +216,13 @@ Les résultats des test de Chis2 suivent les résultats des test de Fisher : le 
 #Distributions
 g2=ggplot(data = df, aes(x = Mjob)) +
   geom_bar() +
-  labs(title = "Distribution du travail de la mère") +
-  scale_fill_manual(values = c("#7570b3","#0072B2", "#E69F00", "#009E73", "#F0E442"))
+  scale_fill_manual(values = c("#7570b3","#0072B2", "#E69F00", "#009E73", "#F0E442")) +
+  labs(title = "Distribution du travail de la mère") 
 
 g1=ggplot(data = df, aes(x = Fjob)) +
   geom_bar() +
-  labs(title="Distribution du travail du père") +
-  scale_fill_manual(values = c("#7570b3","#0072B2", "#E69F00", "#009E73", "#F0E442"))
+  scale_fill_manual(values = c("#7570b3","#0072B2", "#E69F00", "#009E73", "#F0E442")) +
+  labs(title="Distribution du travail du père") 
 
 grid.arrange(g1, g2, ncol = 2)
 
@@ -532,15 +540,11 @@ data_stud$studytime[data_stud$studytime == 2] <- "2 to 5 hours"
 data_stud$studytime[data_stud$studytime == 3] <- "5 to 10 hours"
 data_stud$studytime[data_stud$studytime == 4] <- ">10 hours"
 
-
-ggplot(data_quanti, aes(x = G3, y = studytime)) +
-  geom_boxplot() 
-
-# ggplot(data_stud, aes(x = "", y = n_obs, fill = factor(studytime))) +
-#   geom_bar(stat = "identity", width = 1) +
-#   coord_polar(theta = "y") +
-#   labs(title = "Répartition des temps d'étude toutes filières confondues") +
-#   scale_fill_discrete(name = "Temps d'étude", labels = c("<=2 hours", "2 to 5 hours", "5 to 10 hours", ">10 hours"))
+ggplot(data_stud, aes(x = "", y = n_obs, fill = factor(studytime))) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  labs(title = "Répartition des temps d'étude toutes filières confondues") +
+  scale_fill_discrete(name = "Temps d'étude", labels = c("<=2 hours", "2 to 5 hours", "5 to 10 hours", ">10 hours"))
 ```
 
 On voit clairement que les étudiants travaillent majoritairement moins de 2h00 ou entre 5h00 et 10h00 par semaines.
