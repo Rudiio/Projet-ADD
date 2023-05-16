@@ -544,99 +544,99 @@ On voit que la répartion d'âge est la même dans chaque filière
 ### Quantité de travail
 
 ```{r}
-data_stud=data_quanti
-data_stud=summarise(group_by(data_stud,studytime),n_obs=n()) #on groupe par temps d'étude par semaine 
-
-data_stud$studytime[data_stud$studytime == 1] <- "<2 hours"
-data_stud$studytime[data_stud$studytime == 2] <- "2 to 5 hours"
-data_stud$studytime[data_stud$studytime == 3] <- "5 to 10 hours"
-data_stud$studytime[data_stud$studytime == 4] <- ">10 hours"
-
-
-ggplot(data_stud, aes(x = "", y = n_obs, fill = factor(studytime))) +
-geom_bar(stat = "identity", width = 1) +
-coord_polar(theta = "y") +
-labs(title = "Répartition des temps d'étude toutes filières confondues") +
-scale_fill_discrete(name = "Temps d'étude", labels = c("<=2 hours", "2 to 5 hours", "5 to 10 hours", ">10 hours"))
+# data_stud=data_quanti
+# data_stud=summarise(group_by(data_stud,studytime),n_obs=n()) #on groupe par temps d'étude par semaine 
+# 
+# data_stud$studytime[data_stud$studytime == 1] <- "<2 hours"
+# data_stud$studytime[data_stud$studytime == 2] <- "2 to 5 hours"
+# data_stud$studytime[data_stud$studytime == 3] <- "5 to 10 hours"
+# data_stud$studytime[data_stud$studytime == 4] <- ">10 hours"
+# 
+# 
+# ggplot(data_stud, aes(x = "", y = n_obs, fill = factor(studytime))) +
+# geom_bar(stat = "identity", width = 1) +
+# coord_polar(theta = "y") +
+# labs(title = "Répartition des temps d'étude toutes filières confondues") +
+# scale_fill_discrete(name = "Temps d'étude", labels = c("<=2 hours", "2 to 5 hours", "5 to 10 hours", ">10 hours"))
 ```
 
 On voit clairement que les étudiants travaillent majoritairement moins de 2h00 ou entre 5h00 et 10h00 par semaines.
 
 ```{r}
 #creation data frame stud pour le groupe portugais
-data_stud_por=data_quanti_por
-data_stud_por=summarise(group_by(data_stud_por,studytime),n_obs_por=n()) #on groupe par temps d'étude par semaine 
+# data_stud_por=data_quanti_por
+# data_stud_por=summarise(group_by(data_stud_por,studytime),n_obs_por=n()) #on groupe par temps d'étude par semaine 
+# 
+# data_stud_por$studytime[data_stud_por$studytime == 1] <- "<2 hours"
+# data_stud_por$studytime[data_stud_por$studytime == 2] <- "2 to 5 hours"
+# data_stud_por$studytime[data_stud_por$studytime == 3] <- "5 to 10 hours"
+# data_stud_por$studytime[data_stud_por$studytime == 4] <- ">10 hours"
 
-data_stud_por$studytime[data_stud_por$studytime == 1] <- "<2 hours"
-data_stud_por$studytime[data_stud_por$studytime == 2] <- "2 to 5 hours"
-data_stud_por$studytime[data_stud_por$studytime == 3] <- "5 to 10 hours"
-data_stud_por$studytime[data_stud_por$studytime == 4] <- ">10 hours"
-
-#creation data frame stud pour le groupe mat b
-data_stud_mat=data_quanti_mat
-data_stud_mat=summarise(group_by(data_stud_mat,studytime),n_obs_mat=n()) #on groupe par temps d'étude par semaine 
-
-data_stud_mat$studytime[data_stud_mat$studytime == 1] <- "<2 hours"
-data_stud_mat$studytime[data_stud_mat$studytime == 2] <- "2 to 5 hours"
-data_stud_mat$studytime[data_stud_mat$studytime == 3] <- "5 to 10 hours"
-data_stud_mat$studytime[data_stud_mat$studytime == 4] <- ">10 hours"
-
-#création des camemberts pour les deux sections
-p1=ggplot() +
-  # Premier camembert
-  geom_bar(data = data_stud_mat, aes(x = "", y = n_obs_mat, fill = factor(studytime)), stat = "identity", width = 1) +
-  coord_polar(theta = "y") +
-  theme_void() +
-  labs(title = "Temps d'étude par semaine dans la section maths (à gauche) et portugaise (à droite)") 
-
-  # Deuxième camembert
-p2=ggplot() +
-  geom_bar(data = data_stud_por, aes(x = "", y = n_obs_por, fill = factor(studytime)), stat = "identity", width = 1) +
-  coord_polar(theta = "y") +
-  theme_void() 
-
-grid.arrange(p1, p2, ncol = 2)
-data_stud_mat
+# #creation data frame stud pour le groupe mat b
+# data_stud_mat=data_quanti_mat
+# data_stud_mat=summarise(group_by(data_stud_mat,studytime),n_obs_mat=n()) #on groupe par temps d'étude par semaine 
+# 
+# data_stud_mat$studytime[data_stud_mat$studytime == 1] <- "<2 hours"
+# data_stud_mat$studytime[data_stud_mat$studytime == 2] <- "2 to 5 hours"
+# data_stud_mat$studytime[data_stud_mat$studytime == 3] <- "5 to 10 hours"
+# data_stud_mat$studytime[data_stud_mat$studytime == 4] <- ">10 hours"
+# 
+# #création des camemberts pour les deux sections
+# p1=ggplot() +
+#   # Premier camembert
+#   geom_bar(data = data_stud_mat, aes(x = "", y = n_obs_mat, fill = factor(studytime)), stat = "identity", width = 1) +
+#   coord_polar(theta = "y") +
+#   theme_void() +
+#   labs(title = "Temps d'étude par semaine dans la section maths (à gauche) et portugaise (à droite)") 
+# 
+#   # Deuxième camembert
+# p2=ggplot() +
+#   geom_bar(data = data_stud_por, aes(x = "", y = n_obs_por, fill = factor(studytime)), stat = "identity", width = 1) +
+#   coord_polar(theta = "y") +
+#   theme_void() 
+# 
+# grid.arrange(p1, p2, ncol = 2)
+# data_stud_mat
 ```
 
 On voit qu'il y a plus de personnes qui travaillent moins de deux heures par semaine dans la section portiguaise tandis qu'il y a moins de personnes qui travaillent plus de 10h00 dans cette même section. Le nombre d'étudiants travaillant entre 5 et 10 heures semble être a peu près le même. En effet:
 
 ```{r}
-#on calcul la porportion pour pouvoir comparer
-data_stud_mat <- data_stud_mat %>%
-  mutate(proportion = n_obs_mat / sum(n_obs_mat))
-
-data_stud_por <- data_stud_por %>%
-  mutate(proportion = n_obs_por / sum(n_obs_por))
-
-#on renome de la même manière les colonnes du nombre d'étudiants pour chaque obersvation
-data_stud_mat$filiere=c(rep("math",nrow(data_stud_mat)))
-data_stud_por$filiere=c(rep("portugais",nrow(data_stud_por)))
-colnames(data_stud_mat)[colnames(data_stud_mat) == "n_obs_mat"] <- "n_obs"
-colnames(data_stud_por)[colnames(data_stud_por) == "n_obs_por"] <- "n_obs"
-
-#on concatène les deux datas frame
-data_stud=rbind(data_stud_mat,data_stud_por)
-
-#Création du graphique
-
-ggplot(data_stud, aes(x = studytime, y = proportion, fill = filiere)) + 
-  geom_bar(stat = "identity", position = position_dodge()) + 
-  labs(title = "Comparaison du temps de travail entre deux filières", x = "Temps de travail par semaine", y = "Proportion d'étudiants au sein de chaque groupe") +
-  scale_fill_manual(values = c("red", "blue"))
+# #on calcul la porportion pour pouvoir comparer
+# data_stud_mat <- data_stud_mat %>%
+#   mutate(proportion = n_obs_mat / sum(n_obs_mat))
+# 
+# data_stud_por <- data_stud_por %>%
+#   mutate(proportion = n_obs_por / sum(n_obs_por))
+# 
+# #on renome de la même manière les colonnes du nombre d'étudiants pour chaque obersvation
+# data_stud_mat$filiere=c(rep("math",nrow(data_stud_mat)))
+# data_stud_por$filiere=c(rep("portugais",nrow(data_stud_por)))
+# colnames(data_stud_mat)[colnames(data_stud_mat) == "n_obs_mat"] <- "n_obs"
+# colnames(data_stud_por)[colnames(data_stud_por) == "n_obs_por"] <- "n_obs"
+# 
+# #on concatène les deux datas frame
+# data_stud=rbind(data_stud_mat,data_stud_por)
+# 
+# #Création du graphique
+# 
+# ggplot(data_stud, aes(x = studytime, y = proportion, fill = filiere)) + 
+#   geom_bar(stat = "identity", position = position_dodge()) + 
+#   labs(title = "Comparaison du temps de travail entre deux filières", x = "Temps de travail par semaine", y = "Proportion d'étudiants au sein de chaque groupe") +
+#   scale_fill_manual(values = c("red", "blue"))
 
 ```
 
 On s'aperçoit donc que les élèves dans la filière mathématiques travaillent plus
 
 ```{r}
-data_quanti$studytime[data_quanti$studytime == 1] <- "<2 hours"
-data_quanti$studytime[data_quanti$studytime == 2] <- "2 to 5 hours"
-data_quanti$studytime[data_quanti$studytime == 3] <- "5 to 10 hours"
-data_quanti$studytime[data_quanti$studytime == 4] <- ">10 hours"
-
-ggplot(data_quanti, aes(x = G3, y = studytime)) +
-  geom_boxplot() 
+# data_quanti$studytime[data_quanti$studytime == 1] <- "<2 hours"
+# data_quanti$studytime[data_quanti$studytime == 2] <- "2 to 5 hours"
+# data_quanti$studytime[data_quanti$studytime == 3] <- "5 to 10 hours"
+# data_quanti$studytime[data_quanti$studytime == 4] <- ">10 hours"
+# 
+# ggplot(data_quanti, aes(x = G3, y = studytime)) +
+#   geom_boxplot() 
 ```
 
 On voit que globalement, les élèves qui travaillent plus ont de meilleures notes (comportement bizarre à vérifier)
@@ -892,14 +892,14 @@ ROC_logit$auc
 ```
 
 ```{r}
-# # régression logistique Lasso
+# régression logistique Lasso
 # library(glmnet)
-# res_Lasso <- glmnet(as.matrix(df.train[,-1]),df.train$RS,family='binomial') 
+# res_Lasso <- glmnet(as.matrix(df.train[,-31]),df.train$RS,family='multinomial')
 # plot(res_Lasso, label = TRUE)  # en abscisse : norme des coefficients
 # plot(res_Lasso, xvar = "lambda", label = TRUE) # en abscisse : log(lambda)
 # # sum(coef(res_Lasso, s=exp())!=0)
 # 
-# cvLasso <- cv.glmnet(as.matrix(df.train[,-1]),df.train$RS,family="binomial", type.measure = "class") 
+# cvLasso <- cv.glmnet(as.matrix(df.train[,-31]),df.train$RS,family="multinomial", type.measure = "class")
 # plot(cvLasso)
 # cvLasso$lambda.min
 # coef(res_Lasso, s=cvLasso$lambda.min)
@@ -942,47 +942,21 @@ legend('bottom', col=1:5, paste(c('lda', 'qda', 'cart', 'RF',"logit")),  lwd=1)
 ##ACP
 
 ```{r}
-data_quanti=df[,c(3,13,14,15,31,32,33,34)]
+data_quanti=df[,c(3,13,14,15,30,31,32,33,34)]
 head(data_quanti)
+
+## Clustering à déplacer
+cluster = kmeans(data_quanti,centers=3)
+table(df$RS,cluster$cluster)
 ```
 On va par la suite transformer lorsque cela est possible certaines variables qualitatives en variables quantitatives afin de pouvoir réaliser une ACP dessus. Pour les variables studytime et traveltime, des intervalles nous sont données, on prend donc pour chaque niveau le millieu de l'intervalle. Pour les valeurs extrèmes, 1 et 4, on choisit arbitrairement une borne supèrieure ou inférieure (15H00 pour studytime et 3h00 pour traveltime pour ce qu'il s'agit des bornes supérieures et 0h00 pour les deux bornes inférieures)
-```{r}
-#on convertit studytime et travel time en variables quantitatives (on prend le millieux des segments)
-for (i in 1:nrow(data_quanti)){
-  if (data_quanti$studytime[i]==2){
-    data_quanti$studytime[i]=210
-  }
-   if (data_quanti$studytime[i]==1){
-    data_quanti$studytime[i]=120
-   }
-   if (data_quanti$studytime[i]==3){
-    data_quanti$studytime[i]=450
-   }
-   if (data_quanti$studytime[i]==4){
-    data_quanti$studytime[i]=750
-   }
-  if(data_quanti$traveltime[i]==1){
-    data_quanti$traveltime[i]=7.5
-  }
-   if(data_quanti$traveltime[i]==2){
-    data_quanti$traveltime[i]=22.5
-   }
-   if(data_quanti$traveltime[i]==3){
-    data_quanti$traveltime[i]=45
-   }
-   if(data_quanti$traveltime[i]==4){
-    data_quanti$traveltime[i]=120
-  }
-  
-  
-}
-head(data_quanti)
-```
+
 
 ```{r}
 res=PCA(data_quanti)
 ```
 On voit que les variables study time et travel time sont mal projetées, on ne peut donc pas les interprétes. De manière logique on retrouve que les élèves ayant une bonne moyenne ont eu un bonne note à chaque semestres Vers la gauche se trouvent les paramètres ayant une influence négatives que la moyenne comme les echecs et plus curieusement l'âge (peut être sagit il des personnes ayant redoubler).
+
 ```{r}
 res$eig
 ```
@@ -996,12 +970,14 @@ On retrouve bien  que les personnes ayant le plus travaillé se situé di coté 
 plot(res, select="cos2 0.8", habillage=2, cex=0.9,choix="ind")#visualisation du temps de trajet
 ```
 De la même manière on voit que le temps de trajet a un influence négative sur la réussite.
+
 ```{r}
 plot(res, select="cos2 0.8", habillage=4, cex=0.9,choix="ind")#visualisation des échecs
 ```
 On voit aussi que les élèves qui ont les meilleurs résulats sont ceux qui ont le moins d'échecs.
 Par ailleurs l'acp ici ne semble pas très pertinente car la plupart des variables du jeu de données sont quantitatives, nous avons donc été obligés de les rendre (lorsque cela a un sens) qualitatives. Néeanmoins on voit par exemple que pour ces variables transformées, leur projection est très mauvaise et ne peuvent donc pas être interprétes à l'aide de l'ACP (comme studytime et traveltime). Egalement peut être qu'il y a une meilleure de les rendres qualitatives. C'est pour quoi l'on va réaliser par la suite un anova 2 sur les variables quatitatives studytime et traveltime afin de pouvoir expliqués la variable Moy avec.
 ##Anova 2 sur les variables studytime et traveltime
+
 ```{r}
 #création de la data frame correspondante
 data_anova=df[,c(13,14,34)]

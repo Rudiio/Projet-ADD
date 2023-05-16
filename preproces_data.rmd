@@ -1,0 +1,69 @@
+---
+title: "Modification_données"
+author: "Rudio et Léo-Paul"
+date: "2023-05-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r cars}
+df.mat=read.table("student-mat.csv",sep=",",header=TRUE,as.is = FALSE)
+df.por=read.table("student-por.csv",sep=",",header=TRUE,as.is = FALSE)
+```
+
+
+```{r pressure, echo=FALSE}
+
+modify_travel = function(x)
+{
+  if (x==1){
+    return(runif(1,1,15))
+  }
+  else if (x==2){
+    return(runif(1,15,30))
+  }
+  else if (x==3){
+    return(runif(1,45,60))
+  }
+  else{
+    return(runif(1,60,120))
+  }
+}
+
+modify_study = function(x)
+{
+  if (x==1){
+    return(runif(1,1,2))
+  }
+  else if (x==2){
+    return(runif(1,2,5))
+  }
+  else if (x==3){
+    return(runif(1,5,10))
+  }
+  else{
+    return(runif(1,10,15))
+  }
+}
+```
+
+```{r}
+df.mat$traveltime = sapply(df.mat$traveltime,modify_travel)
+df.por$traveltime = sapply(df.por$traveltime,modify_travel)
+
+df.mat$studytime = sapply(df.mat$studytime,modify_study)
+df.por$studytime = sapply(df.por$studytime,modify_study)
+
+```
+
+
+```{r}
+head(df.mat)
+
+write.csv(df.mat, "student-mat.csv", row.names=FALSE)
+write.csv(df.por, "student-por.csv", row.names=FALSE)
+```
+
