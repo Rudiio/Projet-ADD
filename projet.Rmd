@@ -77,8 +77,6 @@ library(rpart.plot)
 
 ## 1.Chargement des données
 
-Le dataset est composé de 2 fichiers csv représentant les élèves de portugais et de maths. Il faut donc concaténer les deux jeux de données pour obtenir le jeu final. On peut noter qu'il y a 382 élèves qui suivent les deux cours.
-
 ```{r}
 # Chargement de la base de données
 df.mat=read.table("student-mat.csv",sep=",",header=TRUE,as.is = FALSE)
@@ -94,21 +92,13 @@ head(df)
 
 ## 2. Nettoyage et vérification des données
 
-On transforme les variables qualitatives en factor et on vérifie que le jeu ne contient pas de NaN.
+Le jeu est composé de 33 variables dont 17 qualitatives et 16 quantitatives.
+On calcule la moyenne pour chaque élève, et on rajoute une variable pour la réussite scolaire.
 
-Pour préparer les données, on calcule la moyenne pour chaque élève (variable Moy), et on rajoute une variable pour la réussite scolaire (variable RS).
-On garde 3 modalités différentes pour la Réussite scolare :
-
-1. "admis" pour des Moyennes supérieures à 10
-2. "Redoublement" pour des Moyennes entre 8.50 et 10
-3. "Exclusion" pour des Moyennes inférieures à 8.50
-
-On a choisi, cette séparation étant donné qu'elle est plus intéréssante à étudier qu'une simple variable binaire (on a essayé).
 
 ```{r}
 print(str(df))
 print(nrow(df))
-print(is.na(df))
 
 # factor
 # df$famrel=factor(df$famrel)
@@ -126,11 +116,12 @@ df$health=factor(df$health)
 df$Moy = (df$G1+df$G2+df$G3)/3
 
 ## On rajoute la réussite scolaire comme variable qualitative que nous devrons prédire.
+# df$RS = factor(df$Moy>=10)
 df$RS = "admis"
+# df$RS[df$Moy<10]="admis par conseil"
 df$RS[df$Moy<10]="redoublement"
 df$RS[df$Moy<8.50]="exclusion"
 df$RS=factor(df$RS)
-
 head(df)
 
 
@@ -138,7 +129,8 @@ head(df)
 
 # 3. Exploration des données : études des variables 
 
-Cette partie consiste à appliquer des méthodes de statistiques descriptives afin de mieux comprendre le jeu de données et d'analyser les  variables qui nous semblent intéréssantes. Pour l'analyse des variables, on se concentre sur leur corrélation avec les résultats scolaires et la moyenne afin d'identifier les variables significatives.
+Cette partie consiste à appliquer des méthodes de statistiques descriptives afin de mieux comprendre le jeu de données. 
+On se concentre sur l'analyse de la distribution des variables et leur corrélation avec les résultats scolaires.
 
 ## Les variables qualitatives
 
@@ -216,13 +208,13 @@ Les résultats des test de Chis2 suivent les résultats des test de Fisher : le 
 #Distributions
 g2=ggplot(data = df, aes(x = Mjob)) +
   geom_bar() +
-  scale_fill_manual(values = c("#7570b3","#0072B2", "#E69F00", "#009E73", "#F0E442")) +
-  labs(title = "Distribution du travail de la mère") 
+  labs(title = "Distribution du travail de la mère") +
+  scale_fill_manual(values = c("#7570b3","#0072B2", "#E69F00", "#009E73", "#F0E442"))
 
 g1=ggplot(data = df, aes(x = Fjob)) +
   geom_bar() +
-  scale_fill_manual(values = c("#7570b3","#0072B2", "#E69F00", "#009E73", "#F0E442")) +
-  labs(title="Distribution du travail du père") 
+  labs(title="Distribution du travail du père") +
+  scale_fill_manual(values = c("#7570b3","#0072B2", "#E69F00", "#009E73", "#F0E442"))
 
 grid.arrange(g1, g2, ncol = 2)
 
@@ -262,7 +254,7 @@ df.reason = data.frame(df$reason,df$RS)
 table.reason = table(df.reason)
 res = CA(table.reason)
 ```
-
+On voit bien avec l'AFC que les personnes étant admises sont celles qui choisissent l'école pour sa réputation et sa proximité par rapport à leur domicile. A l'inverse on voit que les étudiants qui ont échoués sont ceux qui ont choisis l'école pour les cours ou d'autres raisons. On voit ici une des limite de cette méthode, en effet, on peut penser que les élèves qui réussisent le mieux sont ceux qui sont le plus motivés et donc qui ont chosies l'école pour les cours plus que pour sa réputation.  
 ### Les relations
 
 Il y a environ deux fois plus de jeunes célibataires que de jeunes en couple. 
@@ -404,7 +396,10 @@ df.goout = data.frame(df$goout,df$RS)
 table.goout = table(df.goout)
 res = CA(table.goout)
 ```
+Avec un test du \Chit-2 on observe que les variabales goout et RS sont corrélées (p-valeur petite devant 5%). Nous allons donc réaliser une AFC dessus. Egalement la p-valeur associée au test de fisher (sortie de anova) sur les variables Moy et goout montre que ces grandeurs sont aussi corrélées.
 
+L'AFC nous montre ici que les étudiants qui sortent raisonnablement sont ceux qui réussisent le plus. En effet, ceux qui sortent le plus consacre moins de temps à leur études ce qui peut expliquer ce résultat. Egalement les étudiants qui ne sortent quasiment pas échouent aussi beaucoup. Ce manque de sortie peut denoter d'un défaut de sociabilisation ou des problèmes de santé qui impact gravement la réussite de l'élève. 
+Le diagramme en baton nous permet de voir que la majorité des etudiants sortent de manière modéré (modalité 3). L'AFC nous montre que cela n'est pas un frein à leur réussite.  
 
 ### La consommation d'alcool
 
@@ -430,7 +425,11 @@ table.Dalc = table(df.Dalc)
 res = CA(table.Dalc)
 
 ```
+Avec le test du \Chi-2 on voit que les variables Dalc et RS sont corrélées. On va donc realiser une AFC dessus. De même avec la p-valeur du test de Fisher sur les variables Moy et Dalc, on voit que ces variables sont aussi corrélées (et c'est logique au vu du test du \Chi-2).
 
+On voit très clairement avec l'AFC que les étudiants qui consomment le plus d'alcool sont ceux qui réussissent le moins. En effet, une forte consomation d'alcool témoigne d'un grand nombre de sortie ou bien d'un grave problème de santé (alcoolisme). Ceux qui réussisent le plus sont ceux qui consomment le moins d'alcool.
+
+Avec le diagramme en bâton, on voit que la majorité des étudiants ne consomme quasiment pas d'alcool en semaine. L'AFC montre que cela n'as pas du tout été un frein pour leur réussite
 ```{r}
 # Distribution
 ggplot(data = df, aes(x =Walc, fill = Walc)) +
@@ -450,6 +449,10 @@ table.Walc = table(df.Walc)
 res = CA(table.Walc)
 
 ```
+Tout d'abord on obtiens une p-valeur plus petite que 5% avec le test du \Chi-2 ce qui montre que les variables Walc (consomation alcool le week end) et RS (réussite scoalire) sont corrélées. Nous allons réaliser une AFC dessus afin de mieux les expliquées. De même avec le test de fisher (réalisé à l'aide de l'anova) réalisé sur les variables Walc et Moy montre qu'elles sont corrélées. 
+
+De même on obtiens le même résultat avec la consomation d'alcool le week end (ceux qui consomment le mpoins réussisent le plus), un peu plus nuancé cependant. En effet, on voit à travers les différents diagrammes en batons que globalement il y a plus d'étudiants qui consomment de l'alcool le week end qu'en semaine. On voit donc grâce aux deux AFC que les étudiants qui consomment plutôt de l'acool le week end réussisent mieux que les étudiants qui consommentde l'alcool la semaine et le week end. Ainsi la variable avec la modalité 2 témoigne bien du fait que consomé de l'alcool en semaine est bien plus néfaste qu'en consomé en week-end (dans un contexte de soirée).
+
 
 
 ## Les variables quantitatives
@@ -540,11 +543,12 @@ data_stud$studytime[data_stud$studytime == 2] <- "2 to 5 hours"
 data_stud$studytime[data_stud$studytime == 3] <- "5 to 10 hours"
 data_stud$studytime[data_stud$studytime == 4] <- ">10 hours"
 
+
 ggplot(data_stud, aes(x = "", y = n_obs, fill = factor(studytime))) +
-  geom_bar(stat = "identity", width = 1) +
-  coord_polar(theta = "y") +
-  labs(title = "Répartition des temps d'étude toutes filières confondues") +
-  scale_fill_discrete(name = "Temps d'étude", labels = c("<=2 hours", "2 to 5 hours", "5 to 10 hours", ">10 hours"))
+geom_bar(stat = "identity", width = 1) +
+coord_polar(theta = "y") +
+labs(title = "Répartition des temps d'étude toutes filières confondues") +
+scale_fill_discrete(name = "Temps d'étude", labels = c("<=2 hours", "2 to 5 hours", "5 to 10 hours", ">10 hours"))
 ```
 
 On voit clairement que les étudiants travaillent majoritairement moins de 2h00 ou entre 5h00 et 10h00 par semaines.
