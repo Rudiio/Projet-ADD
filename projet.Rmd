@@ -100,12 +100,30 @@ On calcule la moyenne pour chaque élève, et on rajoute une variable pour la r�
 print(str(df))
 print(nrow(df))
 
+# factor
+# df$famrel=factor(df$famrel)
+df$Dalc=factor(df$Dalc)
+df$Walc=factor(df$Walc)
+# df$freetime=factor(df$freetime)
+# df$Medu=factor(df$Medu)
+# df$Fedu=factor(df$Fedu)
+# df$traveltime=factor(df$traveltime)
+# df$studytime=factor(df$studytime)
+df$goout=factor(df$goout)
+df$health=factor(df$health)
+
 ## On calcule la moyenne des étudiants
 df$Moy = (df$G1+df$G2+df$G3)/3
 
 ## On rajoute la réussite scolaire comme variable qualitative que nous devrons prédire.
-df$RS = factor(df$Moy>=10)
+# df$RS = factor(df$Moy>=10)
+df$RS = "admis"
+# df$RS[df$Moy<10]="admis par conseil"
+df$RS[df$Moy<10]="redoublement"
+df$RS[df$Moy<8.50]="exclusion"
+df$RS=factor(df$RS)
 head(df)
+
 
 ```
 
@@ -206,6 +224,11 @@ summary(lm(Moy ~ Medu+Fedu,data=df))
 # Lien avec la réussite
 chisq.test(df$Mjob,df$RS)
 chisq.test(df$Fjob,df$RS)
+
+# AFC sur le travail de la mère
+df.Mjob = data.frame(df$Mjob,df$RS)
+table.Mjob = table(df.Mjob)
+res = CA(table.Mjob)
 ```
 ### Les raisons du choix d'école
 
@@ -225,6 +248,11 @@ summary(lm(Moy~ reason,data=df))
 
 # Lien avec la réussite
 chisq.test(df$reason,df$RS)
+
+# AFC sur le travail de la mère
+df.reason = data.frame(df$reason,df$RS)
+table.reason = table(df.reason)
+res = CA(table.reason)
 ```
 
 ### Les relations
@@ -292,6 +320,11 @@ no = df$Moy[df$higher=='no']
 
 # Lien avec la réussite
 chisq.test(df$higher,df$RS)
+
+# AFC sur la volonté de faire des études sup
+df.higher = data.frame(df$higher,df$RS)
+table.higher = table(df.higher)
+res = CA(table.higher)
 ```
 
 ### Activités extrascolaires
@@ -318,7 +351,7 @@ chisq.test(df$activities,df$RS)
 ### Cours supplémentaires 
 
 Il y a bien plus d'élèves qui ne suivent pas de cours supplémentaires que d'élèves qui en suivent. Cett distributution est cohérente avec l'idée qu'on oeut se faire.
-Le test de Fisher indique plutôt  que les suivis de cours supplémentaires n'a pas d'impact sur la moyenne. Cependant, d'après le test du Chi2, le suivi de cours supplémentare est bien lié à la réussite scolaire.
+Le test de Fisher indique plutôt  que les suivis de cours supplémentaires n'a pas d'impact sur la moyenne. De même, le suivi de cours supplémentaire n'est pas lié à la réussite.
 
 ```{r}
 # Distribution
@@ -328,14 +361,88 @@ ggplot(data = df, aes(x =paid, fill = paid)) +
        x = "Taille de la famille", y = "Nombre d'étudiants") +
   scale_fill_manual(values = c("#7570b3","#F0E442"))
 
-#barplot(table(df$paid),main="Distribution de la pratique des cours supplémentaires")
-
 # Lien avec la moyenne
 summary(lm(Moy ~ paid,data=df))
 
 # Lien avec la réussite
 chisq.test(df$paid,df$RS)
+
 ```
+## Les variables qualitatives à modalités numériques
+
+### Les sorties
+
+On remarque que les élèves maintiennent leur vie sociale. La grosse majorité sont intermédiaires en termes de sorties ce qui est quand même rassurant.
+Il y a quand même plus de personnes qui sortent vraiment beaucoup que de personnes qui ne sortent pas.
+Le test de Fisher indique les sorties sont très corrélées au notes et le test de Chi2 montre que la réussite scolaire est aussi corrélée aux sorties. Ainsi, on retrouve des résultats qui semblent cohérents et représentatifs de la vie étudiante. 
+
+Etant donné, la corrélation entre RS et goout, on peut effectuer une AFC pour préciser. On peut remarquer que ceux qui sortent peu-moyennement auront tendance à être admis alors que ce qui ne sortent pas (retrait/exclusion social) vont plutôt redoubler et les autres vont avoir tendances à se faire exclure. On obtient donc des résultats qui semblent plutôt pertinents.
+
+```{r}
+# Distribution
+ggplot(data = df, aes(x =goout, fill = goout)) +
+  geom_bar() +
+  labs(title = "Distribution des sorties",
+       x = "Sorties", y = "Nombre d'étudiants") 
+
+# Lien avec la moyenne
+summary(lm(Moy ~ goout,data=df))
+
+# Lien avec la réussite
+chisq.test(df$goout,df$RS)
+
+# AFC sur les sorties
+df.goout = data.frame(df$goout,df$RS)
+table.goout = table(df.goout)
+res = CA(table.goout)
+```
+
+
+### La consommation d'alcool
+
+On s'intérésse enfin à la feature "principale" de ce jeu de données, la consommation d'alcool des étudiants.
+
+```{r}
+
+# Distribution
+ggplot(data = df, aes(x =Dalc, fill = Dalc)) +
+  geom_bar() +
+  labs(title = "Distribution de la consommation d'alcool en semaine",
+       x = "Consommation", y = "Nombre d'étudiants") 
+
+# Lien avec la moyenne
+summary(lm(Moy ~ Dalc,data=df))
+
+# Lien avec la réussite
+chisq.test(df$Dalc,df$RS)
+
+# AFC sur les sorties
+df.Dalc = data.frame(df$Dalc,df$RS)
+table.Dalc = table(df.Dalc)
+res = CA(table.Dalc)
+
+```
+
+```{r}
+# Distribution
+ggplot(data = df, aes(x =Walc, fill = Walc)) +
+  geom_bar() +
+  labs(title = "Distribution de la consommation d'alcool le week-end",
+       x = "Consommation", y = "Nombre d'étudiants") 
+
+# Lien avec la moyenne
+summary(lm(Moy ~ Walc,data=df))
+
+# Lien avec la réussite
+chisq.test(df$Walc,df$RS)
+
+# AFC sur les sorties
+df.Walc = data.frame(df$Walc,df$RS)
+table.Walc = table(df.Walc)
+res = CA(table.Walc)
+
+```
+
 
 ## Les variables quantitatives
 
@@ -365,8 +472,6 @@ ggplot(data = data_age, aes(x = "", y = n_obs, fill = age)) +
 
 ```
 La couleur la plus claire correspond à l'âge le plus grand (22 ans), dès que l'on passe à une couleur plus foncée, on diminue l'âge de 1. On voit clairement ici que la majorité des étudiants ont entre 15 et 19 ans. 
-
-
 
 ```{r}
 data_age_mat=data_quanti_mat
@@ -428,11 +533,14 @@ data_stud$studytime[data_stud$studytime == 3] <- "5 to 10 hours"
 data_stud$studytime[data_stud$studytime == 4] <- ">10 hours"
 
 
-ggplot(data_stud, aes(x = "", y = n_obs, fill = factor(studytime))) +
-  geom_bar(stat = "identity", width = 1) +
-  coord_polar(theta = "y") +
-  labs(title = "Répartition des temps d'étude toutes filières confondues") +
-  scale_fill_discrete(name = "Temps d'étude", labels = c("<=2 hours", "2 to 5 hours", "5 to 10 hours", ">10 hours"))
+ggplot(data_quanti, aes(x = G3, y = studytime)) +
+  geom_boxplot() 
+
+# ggplot(data_stud, aes(x = "", y = n_obs, fill = factor(studytime))) +
+#   geom_bar(stat = "identity", width = 1) +
+#   coord_polar(theta = "y") +
+#   labs(title = "Répartition des temps d'étude toutes filières confondues") +
+#   scale_fill_discrete(name = "Temps d'étude", labels = c("<=2 hours", "2 to 5 hours", "5 to 10 hours", ">10 hours"))
 ```
 
 On voit clairement que les étudiants travaillent majoritairement moins de 2h00 ou entre 5h00 et 10h00 par semaines.
@@ -527,6 +635,9 @@ ggplot(df[df$address == 'U',], aes(x=absences)) +
   theme_minimal()
 
 ```
+
+
+## Variables qualitatives à modalités numériques
 
 ### Santé des étudiants
 
@@ -714,29 +825,29 @@ h) Adaboost
 
 ```{r}
 
-fit.adaboost=gbm(as.numeric(RS)-1 ~., df.train, distribution = "adaboost")
-fit.adaboost
-
-### Calibrer B=n.tree par cross-validation : 
-fit.adaboost=gbm(as.numeric(RS)-1 ~., df.train, distribution = "adaboost",cv.folds = 5, shrinkage = 0.01, n.trees=3000)
-gbm.perf(fit.adaboost)
-B.opt = gbm.perf(fit.adaboost, method="cv")
-
-## prédiction : 
-pred_adaboost = predict(fit.adaboost, newdata=df.test, type = "response", n.trees = B.opt)
-class = 1*(pred_adaboost>1/2)
-
-## Table confusion et accuracy :
-table(df.test$RS, class)
-
-## Accuracy
-accuracy_adaboost = mean(as.numeric(df.test$RS)-1==class)
-print("accuracy adaboost = ")
-print(accuracy_adaboost)
-
-## aire sous courbe ROC
-ROC_adaboost <- roc(df.test$RS, pred_adaboost)
-ROC_adaboost$auc
+# fit.adaboost=gbm(as.numeric(RS)-1 ~., df.train, distribution = "adaboost")
+# fit.adaboost
+# 
+# ### Calibrer B=n.tree par cross-validation : 
+# fit.adaboost=gbm(as.numeric(RS)-1 ~., df.train, distribution = "adaboost",cv.folds = 5, shrinkage = 0.01, n.trees=3000)
+# gbm.perf(fit.adaboost)
+# B.opt = gbm.perf(fit.adaboost, method="cv")
+# 
+# ## prédiction : 
+# pred_adaboost = predict(fit.adaboost, newdata=df.test, type = "response", n.trees = B.opt)
+# class = 1*(pred_adaboost>1/2)
+# 
+# ## Table confusion et accuracy :
+# table(df.test$RS, class)
+# 
+# ## Accuracy
+# accuracy_adaboost = mean(as.numeric(df.test$RS)-1==class)
+# print("accuracy adaboost = ")
+# print(accuracy_adaboost)
+# 
+# ## aire sous courbe ROC
+# ROC_adaboost <- roc(df.test$RS, pred_adaboost)
+# ROC_adaboost$auc
 ```
 ## i) Regression Logistique
 
@@ -795,11 +906,11 @@ ROC_logit$auc
 ## Comparaison
 
 ```{r}
-result=matrix(NA, ncol=6, nrow=2)
+result=matrix(NA, ncol=5, nrow=2)
 rownames(result)=c('accuracy', 'AUC')
-colnames(result)=c('lda', 'qda', 'cart', 'RF', "adaboost","logit")
-result[1,]= c(accuracy_lda, accuracy_qda, accuracy_cart, accuracy_RF,accuracy_adaboost,accuracy_logit)
-result[2,]=c(ROC_lda$auc, ROC_qda$auc, ROC_cart$auc, ROC_RF$auc,  ROC_adaboost$auc,ROC_logit$auc)
+colnames(result)=c('lda', 'qda', 'cart', 'RF',"logit")
+result[1,]= c(accuracy_lda, accuracy_qda, accuracy_cart, accuracy_RF,accuracy_logit)
+result[2,]=c(ROC_lda$auc, ROC_qda$auc, ROC_cart$auc, ROC_RF$auc,ROC_logit$auc)
 result
 apply(result,1, which.max )
 
@@ -807,9 +918,8 @@ plot(ROC_lda, xlim=c(1,0))
 plot(ROC_qda, add=TRUE, col=2)
 plot(ROC_cart, add=TRUE, col=3)
 plot(ROC_RF, add=TRUE, col=4)
-plot(ROC_adaboost, add=TRUE, col=5)
 plot(ROC_logit, add=TRUE, col=6)
-legend('bottom', col=1:5, paste(c('lda', 'qda', 'cart', 'RF', "ada","logit")),  lwd=1)
+legend('bottom', col=1:5, paste(c('lda', 'qda', 'cart', 'RF',"logit")),  lwd=1)
 
 ```
 ##ACP
