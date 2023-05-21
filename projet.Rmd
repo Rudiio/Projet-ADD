@@ -1,6 +1,10 @@
 ---
-title: 'Projet d''analyse de données : qu''est ce qui fait un bon étudiant ?'
-author: "Rudio et Léo-Paul"
+title: 'Projet d''analyse de données'
+subtitle : "Qu'est ce qui fait un bon étudiant ?"
+author: |
+  | FIDA CYRILLE Rudio et BAUDET Léo-Paul 
+  | MAIN4 - Polytech Sorbonne
+
 date: "2023-05-09"
 output:
   pdf_document: 
@@ -9,11 +13,11 @@ output:
     fig_width: 7
 ---
 
-On a beaucoup d'idées reçues par rapport aux facteurs qui feraient d'un étudiant un bon étudiant, notamment sur l'alcool. Le jeu de données que nous avons étudié permet alors de confronter ces idées à des données concrètes.
+On a beaucoup d'idées reçues par rapport aux facteurs qui feraient d'un étudiant un bon étudiant, notamment sur l'alcool. Le jeu de données que nous avons étudié permet alors de confronter ces idées que nous nous faisons à des données concrètes.
 
 # Présentation du jeu de données.
 
-Le jeu de données, nommé "Student alcohol consumption", est constitué d'informations sur la vie d'étudiants dans un lycée du Portugal. Ces informations vont de leur résultats universitaires ou de  leur vie familiale à leur consommation d'alcool. Le jeu a été construit à partir d'une enquête menée auprès d'étudiants en mathématiques et en portugais.
+Le jeu de données, nommé "Student alcohol consumption", est constitué d'informations sur la vie d'étudiants dans un lycée du Portugal. Ces informations vont de leur résultats universitaires ou de leur vie familiale à leur consommation d'alcool. Le jeu a été construit à partir d'une enquête menée auprès d'étudiants en mathématiques et en portugais.
 
 L'objectif serait alors d'analyser le jeu de données afin de comprendre les facteurs qui impactent la réussite scolaire de ces étudiants. L'intérêt du jeu est la grande variété de facteurs proposée qui permet de couvrir un maximum d'hypothèses, notamment celles sur la consommation d'alcool proposée directement par le nom du jeu de données.
 
@@ -24,9 +28,9 @@ Voici les variables présentent dans ce jeu de données ;
 - **age** - age (numérique: de 15 à 22)
 - **address** - adresse (binaire: 'U' - urbain or 'R' - rural)
 - **famsize** - taille de la famille (binaire : 'LE3' - inférieur ou égal à3 or 'GT3' - supérieur à 3)
-- **Pstatus** - parents qui habitent ensemble ? (binary: 'T' - living together or 'A' - apart)
-- **Medu** - niveau d études de la mère (numeric: 0 - none, 1 - primary education (4th grade), 2 – 5th to 9th grade, 3 – secondary education or 4 – higher education)
-- **Fedu** - niveau d études du père (numeric: 0 - none, 1 - primary education (4th grade), 2 – 5th to 9th grade, 3 – secondary education or 4 – higher education)
+- **Pstatus** - parents qui habitent ensemble ? (binaire: 'T' - ensemble or 'A' - séparés)
+- **Medu** - niveau d'études de la mère (numerique: 0 - vide, 1 - primaire (4th grade), 2 – collège, 3 – lycée or 4 – supérieur)
+- **Fedu** - niveau d'études du père (numerique: 0 - vide, 1 - primaire (4th grade), 2 – collège, 3 – lycée or 4 – supérieur)
 - **Mjob** - travail de la mère (nominal: 'teacher', 'health' care related, civil 'services' (e.g. administrative or police), 'at_home' or 'other')
 - **Fjob** - travail du père (nominal: 'teacher', 'health' care related, civil 'services' (e.g. administrative or police), 'at_home' or 'other')
 - **reason** - raison derrière le choix d'école (nominal:'home', school 'reputation', 'course' preference ou 'other')
@@ -53,9 +57,9 @@ Voici les variables présentent dans ce jeu de données ;
 - **G2** - note du $2^{ème}$ (numérique: de 0 à 20)
 - **G3** - note du $3^{ème}$ (numérique: de 0 à 20)
 
-Au cours de ce projet, nous nous concentrons sur la moyenne des étudiants qui est  à calculer et représente la note des élèves sur l'année. En addition, nous nous intéréssons aussi à la réussite scolaire des élèves sur l'année qui va directement découler de leur moyene. Il s'agirait donc ici d'étudier un problème de classification supervisé sur la réussite. Le but final serait alors d'avoir une meilleure compréhension des facteurs qui impacteraient la réussite scolaire et de les confronter à nos propres expériences en tant qu'étudiants.
+Au cours de ce projet, nous nous concentrons sur la moyenne des étudiants qui est à calculer et représente la note des élèves sur l'année. En addition, nous nous intéressons aussi à la réussite scolaire des élèves sur l'année qui va directement découler de leur moyenne. Il s'agirait donc ici d'étudier un problème de classification supervisée sur la réussite et de régression sur la moyenne. Le but final serait alors d'avoir une meilleure compréhension des facteurs qui impacteraient la réussite scolaire et de les confronter à nos propres expériences en tant qu'étudiants.
 
-Dans un premier temps, nous avons étudié chaque variable notamment leur corréléation avec la moyenne et la réussite. Ensuite, nous avons utilisé des méthodes et comparé des méthodes de Machine Learning dans le but de prédire la réussite des élèves.
+Dans un premier temps, nous avons étudié chaque variable notamment leur corréléation avec la moyenne et la réussite. Ensuite, nous avons mis en place des modèles de régression linéaire poir prédire la moyenne annuelle des élèves. Pour finir, nous avons utilisé des méthodes et comparé des méthodes de Machine Learning dans le but de prédire la réussite des élèves.
 
 Voici les bibliothèques à installer :
 ggplot2, FactoMineR, pROC, MASS, randomForest, gbm, gridExtra, dplyr, klaR, rpart, rpart.plot, corrplot, GGally, glmnet, e1071
@@ -83,7 +87,7 @@ library(e1071)
 
 ## Chargement des données
 
-Le dataset est composé de 2 fichiers csv représentant les élèves de portugais et de maths. Il faut donc concaténer les deux jeux de données pour obtenir le jeu final. On peut noter qu'il y a 382 élèves qui suivent les deux cours.
+Le dataset est composé de 2 fichiers csv représentant les élèves de portugais et de maths. Il faut donc concaténer les deux jeux de données pour obtenir le jeu final. On peut noter qu'il y a 382 élèves qui suivent les deux cours. De base, il contient 33 variables dont 8 quantitatives et 25 qualitatives.
 
 ```{r,results='hide',echo=FALSE}
 # Chargement de la base de données
@@ -95,7 +99,7 @@ both= merge(df.mat,df.por,by=c("school","sex","age","address","famsize","Pstatus
 
 # Concaténation des deux dataframes
 df = rbind(df.mat,df.por)
-head(df,c(6,11))
+head(df)
 ```
 
 ## Nettoyage et vérification des données
@@ -131,7 +135,7 @@ df$health=factor(df$health)
 df$Moy = (df$G1+df$G2+df$G3)/3
 
 ## On rajoute la réussite scolaire comme variable qualitative que nous devrons prédire.
-df$RS = "admis"
+df$RS = "admission"
 df$RS[df$Moy<10]="redoublement"
 df$RS[df$Moy<8.50]="exclusion"
 df$RS=factor(df$RS)
@@ -150,7 +154,7 @@ head(data_quanti)
 # Exploration des données : analyse des variables 
 
 Cette partie consiste à appliquer d’abord des méthodes de statistiques descriptives afin de mieux comprendre le jeu de données et d'analyser les variables qui nous semblent intéressantes. La suite de l'analyse consiste alors à vérifier la corrélation des variables avec la moyenne et la réussite scolaire.
-On présente dans cette partie les résultats sur les variables les plus intéréssantes, le reste des résultats est disponible en annexe.
+On présente dans cette partie les résultats sur les variables les plus intéressantes, le reste des résultats est disponible en annexe mais nous n'avons pas traité toutes les variables étant donné leur nombre conséquent. Les sorties sont également présentées en annexe.
 
 ## Les variables qualitatives
 
@@ -158,13 +162,11 @@ Pour chaque variable, nous étudions sa distribution avec soit un diagramme en b
 
 ### Les sorties
 
-On remarque que les élèves maintiennent leur vie sociale. La grosse majorité sont intermédiaires en termes de sorties ce qui est quand même rassurant.
+On remarque que les élèves maintiennent leur vie sociale. Le diagramme en bâton nous permet de voir que la majorité des étudiants sortent de manière modéré (modalité 3). 
 Il y a quand même plus de personnes qui sortent vraiment beaucoup que de personnes qui ne sortent pas.
 Le test de Fisher indique les sorties sont très corrélées au notes et le test de Chi2 montre que la réussite scolaire est aussi corrélée aux sorties. Ainsi, on retrouve des résultats qui semblent cohérents et représentatifs de la vie étudiante. 
 
-Etant donné, la corrélation entre RS et goout, on peut effectuer une AFC pour préciser. On peut remarquer que ceux qui sortent peu-moyennement auront tendance à être admis alors que ce qui ne sortent pas (retrait/exclusion social) vont plutôt redoubler et les autres vont avoir tendances à se faire exclure. On obtient donc des résultats qui semblent plutôt pertinents.
-
-```{r,echo=FALSE}
+```{r goout,echo=FALSE}
 # Distribution
 ggplot(data = df, aes(x =goout, fill = goout)) +
   geom_bar() +
@@ -179,24 +181,24 @@ chisq.test(df$goout,df$RS)
 
 ```
 
-```{r,echo=FALSE}
+```{r goout2,echo=FALSE}
 # AFC sur les sorties
 df.goout = data.frame(df$goout,df$RS)
 table.goout = table(df.goout)
 res = CA(table.goout)
 ```
 
-Avec un test du $\chi^2$ on observe que les variabales goout et RS sont corrélées (p-valeur petite devant 5%). Nous allons donc réaliser une AFC dessus. Egalement la p-valeur associée au test de fisher (sortie de anova) sur les variables Moy et goout montre que ces grandeurs sont aussi corrélées.
+Avec un test du $\chi^2$ on observe que les variables goout et RS sont corrélées (p-valeur petite devant 5%). Nous allons donc réaliser une AFC dessus. Egalement la p-valeur associée au test de fisher (sortie de anova) sur les variables Moy et goout montre que ces grandeurs sont aussi corrélées.
 
-L'AFC nous montre ici que les étudiants qui sortent raisonnablement sont ceux qui réussisent le plus. En effet, ceux qui sortent le plus consacre moins de temps à leur études ce qui peut expliquer ce résultat. Egalement les étudiants qui ne sortent quasiment pas échouent aussi beaucoup. Ce manque de sortie peut denoter d'un défaut de sociabilisation ou des problèmes de santé qui impact gravement la réussite de l'élève. 
-Le diagramme en baton nous permet de voir que la majorité des etudiants sortent de manière modéré (modalité 3). L'AFC nous montre que cela n'est pas un frein à leur réussite.  
+L'AFC nous montre ici que les étudiants qui sortent raisonnablement sont ceux qui réussissent le plus. En effet, ceux qui sortent le plus consacrent moins de temps à leur études ce qui peut expliquer ce résultat. Egalement les étudiants qui ne sortent quasiment pas échouent aussi beaucoup. Ce manque de sortie peut dénoter d'un défaut de socialisation ou des problèmes de santé qui impact gravement la réussite de l'élève. 
+L'AFC nous montre que cela n'est pas un frein à leur réussite.  
 
 
 ### Le sexe des étudiants
 
 D'après le diagramme, le dataset est plutôt équilibré en terme d'hommes et de femmes,il y même plus de femmes que d'hommes dans ce lycées. 
 On étudie ensuite le lien entre le sexe et les notes en effectant une ANOVA1.
-D'après le test de Fisher, p-value > 5% donc il n'y a pas d'effet du sexe sur les notes. D'après le test d'indépendances de Chi2 avec l'admission, le sexe des élèves n'a pas de lien avec leur réussite scolaire.
+D'après le test de Fisher, p-value > 5% donc il n'y a pas d'effet du sexe sur les notes. D'après le test d'indépendances de Chi2 avec l'admission, le sexe des élèves n'a pas de lien avec leur réussite scolaire, ce qui est plutôt rassurant en terme d'équité.
 
 ```{r sex,echo=FALSE,results='hide'}
 # Distribution
@@ -216,7 +218,7 @@ chisq.test(df$sex,df$RS)
 
 Dans les deux cas, others et services sont les catégories qui dominent. Une différence notable est la que la proportion de femme au-foyer est bien plus élevée que celle des hommes.
 D'après le test de Fisher, le travail de la mère a un impact sur les notes, contrairement à celui du père.
-Les résultats des test de Chis2 suivent les résultats des test de Fisher : le travail de la mère et la réussite scolaire sont bien corrélés mais celui du père n'a pas d'impact. 
+Les résultats des test de $\chi²$ suivent les résultats des test de Fisher : le travail de la mère et la réussite scolaire sont bien corrélés mais celui du père n'a pas d'impact, ce qui est assez surprenant. 
 
 ```{r job,echo=FALSE,results='hide'}
 #Distributions
@@ -241,22 +243,23 @@ chisq.test(df$Fjob,df$RS)
 
 ```
 
-```{r,echo=FALSE}
+```{r job2,echo=FALSE}
 # AFC sur le travail de la mère
 df.Mjob = data.frame(df$Mjob,df$RS)
 table.Mjob = table(df.Mjob)
 res = CA(table.Mjob)
 ```
 
+Etant donné les résultats du test de corrélation, on applique une AFC entre les deux variables. On observe alors que les élèves dont les mères travaillent dans la santé, l'enseignement ou les services auront tendances à être en réussite. A l'opposé, les élèves dont les mères sont femmes au foyer seront plutôt en situation d'échec. 
 
 ### Les relations
 
 Il y a environ deux fois plus de jeunes célibataires que de jeunes en couple. 
 On peut penser qu'être en couple réduit le temps passé à étudier et rajoute des distractions, donc il devrait avoir un impact négatif sur les notes. D'après le test de Fisher, la p-value est fortement inférieure à 5%, donc on rejette H0: il y a bien un lien entre situation romantique et notes, ce qui rejoint bien l'idée de départ.
-Il serait donc intéréssant d'étudier la distribution des notes selon la situation romantique. D'après les boxplots, les différences sont assez minimes, même si on peut aperçevoir que les notes des célibataires sont légèrement meilleures.
-Cependant, la présence de relation amoureuse n'a pas d'impact sur la réussite scolaire. Ainsi, être en couple fait baisser la moyenne mais n'est pas un facteur d'échec.
+Il serait donc intéressant d'étudier la distribution des notes selon la situation romantique. D'après les boxplots, les différences sont assez minimes, même si on peut apercevoir que les notes des célibataires sont légèrement meilleures.
+Cependant, d'après le test de $\chi²$ la présence de relation amoureuse n'a pas d'impact sur la réussite scolaire. Ainsi, être en couple fait baisser la moyenne mais n'est pas un facteur d'échec.
 
-```{r,echo=FALSE,results='hide'}
+```{r rel,echo=FALSE,results='hide'}
 # Distribution
 gr1=ggplot(df, aes(x = romantic)) +
   geom_bar(fill = "steelblue") +
@@ -286,7 +289,7 @@ chisq.test(df$romantic,df$RS)
 
 On s'intérésse enfin à la feature "principale" de ce jeu de données, la consommation d'alcool des étudiants.
 
-```{r,echo=FALSE,results='hide'}
+```{r dalc,echo=FALSE,results='hide'}
 
 # Distribution
 ggplot(data = df, aes(x =Dalc, fill = Dalc)) +
@@ -302,20 +305,20 @@ chisq.test(df$Dalc,df$RS)
 
 ```
 
-```{r,echo=FALSE}
+```{r dalc1,echo=FALSE}
 # AFC sur les sorties
 df.Dalc = data.frame(df$Dalc,df$RS)
 table.Dalc = table(df.Dalc)
 res = CA(table.Dalc)
 ```
 
-Avec le test du $\chi^2$ on voit que les variables Dalc et RS sont corrélées. On va donc realiser une AFC dessus. De même avec la p-valeur du test de Fisher sur les variables Moy et Dalc, on voit que ces variables sont aussi corrélées (et c'est logique au vu du test du $\chi^2$).
+Avec le test du $\chi^2$ on voit que les variables Dalc et RS sont corrélées. On va donc réaliser une AFC dessus. De même avec la p-valeur du test de Fisher sur les variables Moy et Dalc, on voit que ces variables sont aussi corrélées (et c'est logique au vu du test du $\chi^2$).
 
-On voit très clairement avec l'AFC que les étudiants qui consomment le plus d'alcool sont ceux qui réussissent le moins. En effet, une forte consomation d'alcool témoigne d'un grand nombre de sortie ou bien d'un grave problème de santé (alcoolisme). Ceux qui réussisent le plus sont ceux qui consomment le moins d'alcool.
+On voit très clairement avec l'AFC que les étudiants qui consomment le plus d'alcool sont ceux qui réussissent le moins. En effet, une forte consomation d'alcool témoigne d'un grand nombre de sortie ou bien d'un grave problème de santé (alcoolisme). Ceux qui réussissent le plus sont ceux qui consomment le moins d'alcool.
 
-Avec le diagramme en bâton, on voit que la majorité des étudiants ne consomme quasiment pas d'alcool en semaine. L'AFC montre que cela n'as pas du tout été un frein pour leur réussite.
+Avec le diagramme en bâton, on voit que la majorité des étudiants ne consomme quasiment pas d'alcool en semaine. L'AFC montre que cela n'a pas du tout été un frein pour leur réussite.
 
-```{r,echo=FALSE,results='hide'}
+```{r walc,echo=FALSE,results='hide'}
 # Distribution
 ggplot(data = df, aes(x =Walc, fill = Walc)) +
   geom_bar() +
@@ -330,23 +333,21 @@ chisq.test(df$Walc,df$RS)
 
 ```
 
-```{r,echo=FALSE}
+```{r walc1,echo=FALSE}
 # AFC sur les sorties
 df.Walc = data.frame(df$Walc,df$RS)
 table.Walc = table(df.Walc)
 res = CA(table.Walc)
 ```
 
-Tout d'abord on obtiens une p-valeur plus petite que 5% avec le test du $\chi^2$ ce qui montre que les variables Walc (consomation alcool le week end) et RS (réussite scoalire) sont corrélées. Nous allons réaliser une AFC dessus afin de mieux les expliquées. De même avec le test de fisher (réalisé à l'aide de l'anova) réalisé sur les variables Walc et Moy montre qu'elles sont corrélées. 
+Tout d'abord on obtiens une p-valeur plus petite que 5% avec le test du $\chi^2$ ce qui montre que les variables Walc (consommation alcool le week end) et RS (réussite scolaire) sont corrélées. Nous allons réaliser une AFC dessus afin de mieux les expliquées. De même avec le test de fisher (réalisé à l'aide de l'anova) réalisé sur les variables Walc et Moy montre qu'elles sont corrélées. 
 
-De même on obtiens le même résultat avec la consomation d'alcool le week end (ceux qui consomment le mpoins réussisent le plus), un peu plus nuancé cependant. En effet, on voit à travers les différents diagrammes en batons que globalement il y a plus d'étudiants qui consomment de l'alcool le week end qu'en semaine. On voit donc grâce aux deux AFC que les étudiants qui consomment plutôt de l'acool le week end réussisent mieux que les étudiants qui consommentde l'alcool la semaine et le week end. Ainsi la variable avec la modalité 2 témoigne bien du fait que consomé de l'alcool en semaine est bien plus néfaste qu'en consomé en week-end (dans un contexte de soirée).
-
+De même on obtiens le même résultat avec la consommation d'alcool le week end (ceux qui consomment le moins réussissent le plus), un peu plus nuancé cependant. En effet, on voit à travers les différents diagrammes en bâtons que globalement il y a plus d'étudiants qui consomment de l'alcool le week-end qu'en semaine. On voit donc grâce aux deux AFC que les étudiants qui consomment plutôt de l'alcool le week-end réussissent mieux que les étudiants qui consomment de l'alcool la semaine et le week end. Ainsi la variable avec la modalité 2 témoigne bien du fait que consommer de l'alcool en semaine est bien plus néfaste qu'en consommer en week-end (dans un contexte de soirée). En même temps, la consommation d'alcool en semaine de manière élevée montre des tendances alcooliques de la part des étudiant, notamment lycéens dans notre étude.
 
 ## Les variables quantitatives
 
 Dans cette partie, on s’intéresse aux variables quantitatives du jeu de données.
 De même que pour les variables qualitatives, on cherche à identifier les facteurs qui impactent la moyenne ainsi que la réussite scolaire.
-
 
 ### Statistiques descriptives et corrélation
 
@@ -359,9 +360,9 @@ Le graphe nous montre la répartition bivariée des variables quantitatives ains
 On en déduit les informations suivantes:
 
 \begin{itemize}
-  \item La majorité des étudiants ont entre 15 et 19 ans. L'âge est corrélé négativement avec la moyenne ce qui est plutôt surprenant.
-  \item La plupart des étudiants ont moins de 30 minutes de temps de trajet. On a une corrélation négative pour le temps de trajet, ce qui paraît logique.
-  \item Les étudiants travaillent généralement moins de 4h. Corrélation positive prévisible.
+  \item la majorité des étudiants ont entre 15 et 19 ans. L'âge est corrélé négativement avec la moyenne ce qui est plutôt surprenant.
+  \item la plupart des étudiants ont moins de 30 minutes de temps de trajet. On a une corrélation négative pour le temps de trajet, ce qui paraît logique.
+  \item les étudiants travaillent généralement moins de 4h. Corrélation positive prévisible.
   \item globalement peu d'absences et d'échecs. Pas de corrélation pour les abscences et forte corrélation pour les échecs.
   \item quasiment la même distribution de notes aux 3 semestres et donc de même pour la moyenne. Les élèves ont des moyennes qui tournent majoritairement entre 10-12.
   On remarque également que toutes les notes sont très fortement corrélées entre elles.
@@ -369,16 +370,17 @@ On en déduit les informations suivantes:
 
 ### ACP
 
-On effectue une Analyse en composantes principales (ACP) sur nos données quantitatives afin d'avoir llus d'informations sur nos données.
+On effectue une Analyse en composantes principales (ACP) sur nos données quantitatives afin d'avoir plus d'informations sur nos données.
 
 ```{r acp1,echo=FALSE}
 res=PCA(data_quanti,quali.sup = 10)
 ```
 
-On voit que les variables study time et travel time sont très mal représentées, on ne peut donc pas les interpréter. Failure, age et absences ne sont pas particulièrement bien représentées non plus, mais elles sont interprétable. 
-En interprétant le cercle de corrélation, on remarque que le premier axe sépare les bons des mauvais élèves : bons élèves à droite. Le second axe sépare les élèves plus agés et absents (vers le haut) des élèves moins âgés et plus assidus.
+On voit que les variables studytime et traveltime sont très mal représentées, on ne peut donc pas les interpréter. Failure, age et absences ne sont pas particulièrement bien représentées non plus, mais elles sont interprétables. 
+En interprétant le cercle de corrélation, on remarque que le premier axe sépare les bons des mauvais élèves : bons élèves à droite. Le second axe sépare les élèves plus âgés et absents (vers le haut) des élèves moins âgés et plus assidus.
 
-On peut afficher les pourcentages d'explications pour chacun des axes : 
+On peut afficher les pourcentages d'explications d'inertie pour chacun des axes : 
+
 ```{r eig,echo=FALSE}
 res$eig
 ```
@@ -404,6 +406,70 @@ On remarque que les élèves les plus âgés se dirigent vers un redoublement ou
 
 Malheureusement, à notre niveau, nous ne disposons pas de réel moyen d'évaluer l'influence des variables quantitatives sur la réussite scolaire. Nous partirons donc du principe que les variables qui impactent le plus les notes auront un réel impact sur la réussite scolaire. On pensera notamment aux échecs.
 
+# Régression linéaire
+
+Dans cette partie, nous mettons en place un modèle de régression linéaire gaussien afin de prédire la variable Moy à partir de toutes les autres.
+On s'intéressera ici uniquement à des modèles dont les variables auront été sélectionnées par step étant donné la grande quantité de variables. Le but sera donc de comparer les différents modèles : forward, stepwise et backward. Les modèles étant construits de manière plus ou moins similaires, la comparaison n'a pas forcément d'intérêt, mais cela permettra d'observer s'il existe de réelles différences entre chacune des méthodes.
+
+Le modèle sera construits à partir de toutes les variables sauf G1, G2, G3 et RS, il est donc nécessaire de préparer les données avant.
+Pour évaluer le modèle, nous mettrons le modèle en place sur un jeu "d'entraînement" et nous l'évaluerons sur un jeu de test en utilisant le ratio $\frac{1}{5}$. La métrique que nous utiliserons sera la Mean Absolute Error (MAE), il s'agit de la moyenne des valeurs absolues des erreurs effectuées pour toutes les prédictions.
+Les modèles seront évalués $N=10$ fois avec des répartitions aléatoires, la MAE obtenues à la fin sera donc une moyenne des MAE : MMAE. Cela nous permet d'avoir des résultats plus généraux sur ces modèles.
+
+Voici les résutats obtenus:
+
+```{r reg models, message=FALSE, warning=FALSE, include=FALSE}
+X = subset(df, select = -c(G1,G2,G3,RS) )
+
+mae_forward = 0
+mae_step = 0
+mae_back = 0
+N=10
+
+for(i in 1:N)
+{
+  # Génération des jeux d'entraînement et de test
+  set.seed(i)
+  n <- nrow(X)
+  p <- ncol(X)-1
+  test.ratio <- .2 # ratio of test/train samples
+  n.test <- round(n*test.ratio)
+  tr <- sample(1:n,n.test)
+  df.reg.test <- X[tr,]
+  df.reg.train <- X[-tr,]
+  
+  # Modèles de bases
+  res0=lm(df.reg.train$Moy ~ 1,df.reg.train)
+  resT = lm(df.reg.train$Moy~.,df.reg.train)
+  
+  # Modèles par sélection
+  linforward = step(res0,scope=formula(resT),direction="forward")
+  linstep = step(res0,scope=formula(resT),direction="both")
+  linback = step(resT,direction="backward")
+  
+  mae_forward = mae_forward + mean(abs(df.reg.test$Moy - predict(linforward,newdata = df.reg.test)))
+  mae_step = mae_step + mean(abs(df.reg.test$Moy - predict(linstep,newdata = df.reg.test)))
+  mae_back = mae_back + mean(abs(df.reg.test$Moy - predict(linback,newdata = df.reg.test)))
+}
+
+```
+
+
+```{r compar reg,echo=FALSE, message=FALSE, warning=FALSE}
+mae_forward = mae_forward/N
+mae_step = mae_step/N
+mae_back = mae_back/N
+
+result=matrix(NA, ncol=3, nrow=1)
+rownames(result)=c('MMAE')
+colnames(result)=c('forward','stepwise','backward')
+result[1,]= c(mae_forward,mae_step,mae_back)
+result
+```
+
+Dans un premier temps, on se rend compte que les résultats sont tout de même assez élevés (de l'ordre de 2 ce qui est beaucoup pour des notes sur 20), indiquant donc que les modèles ne sont pas assez précis pour prédire la Moyenne. On peut imaginer que cela provient d'une insuffisance de données par exemple. On pourrait alors penser à rajouter de nouvelles variables.
+
+Dans un second temps, on peut remarquer que les 3 modèles n'ont pas les mêmes résultats, ce qui montre qu'on n'obtient pas tout le temps le même modèle pour les différentes méthodes de sélection. De plus, on peut remarquer que les résultats changent beaucoup trop à chaque fois que l'on relance l'évaluation, il n'est donc pas possible d'élire de meilleur modèle selon cette procédure d'évaluation. Cependant, étant donné les résultats, on peut conclure que les 3 procédures de sélection se valent pour notre tâche et leurs résultats sont plutôt décevants.
+ 
 # Machine Learning : Classification de la réussite scolaire 
 
 Dans cette partie, nous nous concentrons sur la mise en place de méthodes de classification afin de prédire la variable RS (réussite scolaire).
@@ -415,7 +481,7 @@ L'intérêt d'effectuer de la classification non supervisé serait de voir comme
 ### Kmeans
 
 On applique l'algorithme de Kmeans avec 100 itérations et sans initialisation sur les données pour 3 groupes.
-Les résultats obtenus sont bien loin de la classification déja présente. On en déduit donc que l'algorithme ne classe pas en fonction de la réussite au final. Le graphe d'ACP associé aux clusters montre qu'il n'y a pas de signification concrète à ces groupes
+Les résultats obtenus sont bien loin de la classification déjà présente . On en déduit donc que l'algorithme ne classe pas en fonction de la réussite au final. Le graphe d'ACP associé aux clusters montre qu'il n'y a pas de signification concrète à ces groupes et les 3 groupes formés ne sont pas particulièrement distinguables sur le graphe de l'ACP.
 
 ```{r kmeans,echo=FALSE}
 data_quanti=df[,c(3,13,14,15,30,31,32,33)]
@@ -433,7 +499,7 @@ plot(ACP,habillage=9,cex = 0.6, select= "cos2 0.8")
 ### CAH
 
 On lance un algorithme de cah sur nos données quantitatives. 
-On obtient le dendogramme suivant duquel on extrait nos 3 classes qui nous intéréssent.
+On obtient le dendogramme suivant duquel on extrait nos 3 classes qui nous intéressent.
 
 ```{r,echo=FALSE}
 df.cr <- scale(data_quanti,center=TRUE, scale=TRUE)
@@ -445,7 +511,8 @@ plot(df.cah, hang=-1)
 rect.hclust(df.cah,3)
 ```
 
-On peut alors observer le graphe des hauteurs pour chaque branche. En se basant sur la perte d'inertie, il est clair que l'on aurait gardé plus de 3 classes. Cela laisse penser que l'algorithme classerait pourrait donc rafiner les classes plus que nous l'avons déja fait en distinguant 3 classes de réussite. Pour avoir une meilleure interprétation sur ces classes, on peut alors effectuer une ACP.
+On peut alors observer le graphe des hauteurs pour chaque branche. En se basant sur la perte d'inertie, il est clair que l'on aurait gardé plus de 3 classes. Cela laisse penser que l'algorithme classerait pourrait donc raffiner les classes plus que nous l'avons déja fait en distinguant 3 classes de réussite. 
+Pour avoir une meilleure interprétation sur ces classes, on peut alors effectuer une ACP.
 
 ```{r,echo=FALSE,results='hide'}
 barplot(df.cah$height)
@@ -453,7 +520,7 @@ groupes.cah <- cutree(df.cah, 3)
 table(groupes.cah,df$RS)
 ```
 
-En observant l'ACP, on se rend compte que contrairement à la méthode de kmeans, les classes de la cah se distinguent bien sur le graphe des individus. On pourra également remarquer que la classification donnée est similaire à celle que nous avons mis en place pour RS (ACP section 3.2.2) ce qui est assez intéréssant. On pourrait donc penser que l'algorithme classifie selon les notes, mais ce qui est le plus intéréssant est que les frontières pour chaque groupe sont vraiment proches de celles que nous avons mis en place.
+En observant l'ACP, on se rend compte que contrairement à la méthode de kmeans, les classes de la cah se distinguent bien sur le graphe des individus. On pourra également remarquer que la classification donnée est similaire à celle que nous avons mis en place pour RS (ACP section 3.2.2) ce qui est assez intéressant. On pourrait donc penser que l'algorithme classifie selon les notes, mais ce qui est le plus intéréssant est que les frontières pour chaque groupe sont vraiment proches de celles que nous avons mis en place.
 
 ```{r,echo=FALSE}
 # Affichage sur l'ACP
@@ -462,12 +529,10 @@ ACP = PCA(data_clus,quali.sup = 9,graph = FALSE)
 plot(ACP,habillage=9,cex = 0.6, select= "cos2 0.8")
 ```
 
-
-
 ## Classification supervisée
 
-Il s'agit ici de la partie la plus intéréssante : prédire la réussite scolaire d'un élève à partir de données. Notre objectif est donc de trouver un modèle qui aurait des résultats fiables pour cette tâche.
-Nous nous sommens donc  essentiellement  intéréssé à la comparaison des résultats de chacune des méthodes. Les méthodes utilisées seront évaluées avec leur accuracy et leur courbe ROC.
+Il s'agit ici de la partie la plus intéressante : prédire la réussite scolaire d'un élève à partir de données. Notre objectif est donc de trouver un modèle qui aurait des résultats fiables pour cette tâche.
+Nous nous sommes donc  essentiellement  intéressé à la comparaison des résultats de chacune des méthodes. Les méthodes utilisées seront évaluées avec leur accuracy et leur courbe ROC.
 
 Pour évaluer les modèles de manière plus précise, on calcule la moyenne d'accuracy sur $N$ configurations de jeu de données et de jeu de test. Cela nous permet d'avoir des résultats plus généraux sur les performances des modèles.
 
@@ -836,8 +901,8 @@ legend('bottom', col=1:5, paste(c('lda', 'qda','stepwise_lda', 'cart', 'RF',"log
 
 ```
 
-Après calculs, on obtient des résultats plutôt décevant pour cette classification. Pour l'accuraccy, les résultats tournent autour des 80% ce qui est assez faible.
-Le meilleur résulat s'obtient avec une régression logistique et le pire avec une SVM.
+Après calculs, on obtient des résultats plutôt décevants pour cette classification. Pour l'accuracy, les résultats tournent autour des 70% ce qui est assez faible, de même pour la courbe ROC.
+Le meilleur résultat en terme d'accuracy s’obtiennent avec une régression logistique et le pire avec une SVM. Pour l'aire sous la courbe ROC, les meilleurs résultats sont obtenus avec le modèle cart.
 Globalement, on en déduit que ces données ne se prêtent pas bien à la classification de la réussite scolaire dans leur état actuel.
 
 
@@ -846,13 +911,47 @@ Globalement, on en déduit que ces données ne se prêtent pas bien à la classi
 Au final, ce jeu de données est vraiment intéressant étant donné qu'il renferme une grande quantité d'informations sur les étudiants.
 Il nous a permis d'appliquer une grande partie des méthodes statistiques apprises cette année de manière plus ou moins pertinente. On pourra noter également que la présence d'une grande quantité de variables qualitatives  et de moins de variables quantitatives a rendu l'application de certaines méthodes plus compliquées. Cependant, globalement il s'agit d'un dataset intéressant pour apprendre à appliquer ces méthodes dans un cas moins trivial.
 
-De plus, il nous a permis d'identifier les facteurs qui ont un impact sur les notes et la réussite scolaire des étudiants. On a ainsi pu observer des relations plutôt inattendues notamment par rapport à nos propres idées. 
+De plus, il nous a permis d'identifier les facteurs qui ont un impact sur les notes et la réussite scolaire des étudiants. On a ainsi pu observer des relations plutôt inattendues notamment par rapport à nos propres idées et expériences.  
 
-Cependant, les données du jeu ne sont pas forcément adaptées à la classification. On obtient des résultats assez bas pour toutes les méthodes utilisées.
+Cependant, les données du jeu ne sont pas forcément adaptées à la classification ni à la régression linéaire. On obtient des résultats assez bas pour toutes les méthodes utilisées dans les 2 tâches. On peut donc imaginer qu'une manière d'améliorer les résultats serait alors de rajouter de nouvelles variables qui pourrait avoir un impact sur la moyenne et la réussite car d'après notre étude, toutes les variables n'ont pas toutes un impact sur elles.
+
+Pour finir, on pourra dire que ce jeu de données montre un cas pratique non trivial pour l'application des méthodes d'analyse de données et met en valeurs l'apport d'informations qu'elle donnent.
+
+\newpage
 
 \appendix
 
-# Suite de l'étude ds variables 
+# Suite de l'étude des variables et sorties manquantes 
+
+## Les sorties
+
+```{r,ref.label='goout', eval = TRUE,fig.show='hide'}
+```
+
+
+### Le sexe des étudiants
+
+```{r,ref.label='sex', eval = TRUE,fig.show='hide'}
+```
+
+## Travail des parents
+
+```{r,ref.label='job', eval = TRUE,fig.show='hide'}
+
+```
+
+### Les relations
+
+```{r,ref.label='rel', eval = TRUE,fig.show='hide'}
+```
+
+## La consommation d'alcool
+
+```{r,ref.label='dalc', eval = TRUE,fig.show='hide'}
+```
+
+```{r,ref.label='walc', eval = TRUE,fig.show='hide'}
+```
 
 ## Les raisons du choix d'école
 
@@ -1005,109 +1104,6 @@ chisq.test(df$paid,df$RS)
 
 ```
 
-
-On voit que la répartion d'âge est la même dans chaque filière
-
-## Quantité de travail
-
-```{r,echo=FALSE}
-# data_stud=data_quanti
-# data_stud=summarise(group_by(data_stud,studytime),n_obs=n()) #on groupe par temps d'étude par semaine 
-# 
-# data_stud$studytime[data_stud$studytime == 1] <- "<2 hours"
-# data_stud$studytime[data_stud$studytime == 2] <- "2 to 5 hours"
-# data_stud$studytime[data_stud$studytime == 3] <- "5 to 10 hours"
-# data_stud$studytime[data_stud$studytime == 4] <- ">10 hours"
-# 
-# 
-# ggplot(data_stud, aes(x = "", y = n_obs, fill = factor(studytime))) +
-# geom_bar(stat = "identity", width = 1) +
-# coord_polar(theta = "y") +
-# labs(title = "Répartition des temps d'étude toutes filières confondues") +
-# scale_fill_discrete(name = "Temps d'étude", labels = c("<=2 hours", "2 to 5 hours", "5 to 10 hours", ">10 hours"))
-```
-
-On voit clairement que les étudiants travaillent majoritairement moins de 2h00 ou entre 5h00 et 10h00 par semaines.
-
-```{r,echo=FALSE}
-#creation data frame stud pour le groupe portugais
-# data_stud_por=data_quanti_por
-# data_stud_por=summarise(group_by(data_stud_por,studytime),n_obs_por=n()) #on groupe par temps d'étude par semaine 
-# 
-# data_stud_por$studytime[data_stud_por$studytime == 1] <- "<2 hours"
-# data_stud_por$studytime[data_stud_por$studytime == 2] <- "2 to 5 hours"
-# data_stud_por$studytime[data_stud_por$studytime == 3] <- "5 to 10 hours"
-# data_stud_por$studytime[data_stud_por$studytime == 4] <- ">10 hours"
-
-# #creation data frame stud pour le groupe mat b
-# data_stud_mat=data_quanti_mat
-# data_stud_mat=summarise(group_by(data_stud_mat,studytime),n_obs_mat=n()) #on groupe par temps d'étude par semaine 
-# 
-# data_stud_mat$studytime[data_stud_mat$studytime == 1] <- "<2 hours"
-# data_stud_mat$studytime[data_stud_mat$studytime == 2] <- "2 to 5 hours"
-# data_stud_mat$studytime[data_stud_mat$studytime == 3] <- "5 to 10 hours"
-# data_stud_mat$studytime[data_stud_mat$studytime == 4] <- ">10 hours"
-# 
-# #création des camemberts pour les deux sections
-# p1=ggplot() +
-#   # Premier camembert
-#   geom_bar(data = data_stud_mat, aes(x = "", y = n_obs_mat, fill = factor(studytime)), stat = "identity", width = 1) +
-#   coord_polar(theta = "y") +
-#   theme_void() +
-#   labs(title = "Temps d'étude par semaine dans la section maths (à gauche) et portugaise (à droite)") 
-# 
-#   # Deuxième camembert
-# p2=ggplot() +
-#   geom_bar(data = data_stud_por, aes(x = "", y = n_obs_por, fill = factor(studytime)), stat = "identity", width = 1) +
-#   coord_polar(theta = "y") +
-#   theme_void() 
-# 
-# grid.arrange(p1, p2, ncol = 2)
-# data_stud_mat
-```
-
-On voit qu'il y a plus de personnes qui travaillent moins de deux heures par semaine dans la section portiguaise tandis qu'il y a moins de personnes qui travaillent plus de 10h00 dans cette même section. Le nombre d'étudiants travaillant entre 5 et 10 heures semble être a peu près le même. En effet:
-
-```{r,echo=FALSE}
-# #on calcul la porportion pour pouvoir comparer
-# data_stud_mat <- data_stud_mat %>%
-#   mutate(proportion = n_obs_mat / sum(n_obs_mat))
-# 
-# data_stud_por <- data_stud_por %>%
-#   mutate(proportion = n_obs_por / sum(n_obs_por))
-# 
-# #on renome de la même manière les colonnes du nombre d'étudiants pour chaque obersvation
-# data_stud_mat$filiere=c(rep("math",nrow(data_stud_mat)))
-# data_stud_por$filiere=c(rep("portugais",nrow(data_stud_por)))
-# colnames(data_stud_mat)[colnames(data_stud_mat) == "n_obs_mat"] <- "n_obs"
-# colnames(data_stud_por)[colnames(data_stud_por) == "n_obs_por"] <- "n_obs"
-# 
-# #on concatène les deux datas frame
-# data_stud=rbind(data_stud_mat,data_stud_por)
-# 
-# #Création du graphique
-# 
-# ggplot(data_stud, aes(x = studytime, y = proportion, fill = filiere)) + 
-#   geom_bar(stat = "identity", position = position_dodge()) + 
-#   labs(title = "Comparaison du temps de travail entre deux filières", x = "Temps de travail par semaine", y = "Proportion d'étudiants au sein de chaque groupe") +
-#   scale_fill_manual(values = c("red", "blue"))
-
-```
-
-On s'aperçoit donc que les élèves dans la filière mathématiques travaillent plus
-
-```{r,echo=FALSE}
-# data_quanti$studytime[data_quanti$studytime == 1] <- "<2 hours"
-# data_quanti$studytime[data_quanti$studytime == 2] <- "2 to 5 hours"
-# data_quanti$studytime[data_quanti$studytime == 3] <- "5 to 10 hours"
-# data_quanti$studytime[data_quanti$studytime == 4] <- ">10 hours"
-# 
-# ggplot(data_quanti, aes(x = G3, y = studytime)) +
-#   geom_boxplot() 
-```
-
-On voit que globalement, les élèves qui travaillent plus ont de meilleures notes (comportement bizarre à vérifier)
-
 ### Absences des étudiants
 
 ```{r,echo=FALSE}
@@ -1120,10 +1116,7 @@ ggplot(df[df$address == 'U',], aes(x=absences)) +
 
 ```
 
-
 ### L'âge des élèves 
-
-On peut par exemple
 
 ```{r,warning=FALSE,echo=FALSE}
 
@@ -1189,12 +1182,36 @@ ggplot(data_age, aes(x = age, y = proportion, fill = filiere)) +
   scale_fill_manual(values = c("red", "blue")) 
 ```
 
+## Cours particuliers
+
+```{r}
+
+ggplot(df, aes(x = age, y = G3, color = paid)) +
+  geom_point(alpha = 0.7) +
+  facet_wrap(~paid) +
+  labs(title = "Distribution de l'âge et de la note finale en fonction cours particuliers et de l'âge",
+       x = "Âge", y = "Note finale")
+```
+
+Curieusement, les résultats semblent meilleur pour ceux qui n'ont pas pris de cours
+
+# Codes pour la partie Régression
+
+Code pour l'évaluation :
+```{r reg1, ref.label='reg models', eval = FALSE}
+```
+
+Code pour la comparaison :
+
+```{r reg2, ref.label='compar reg', eval = FALSE}
+```
+
+
 # Codes pour la partie Machine Learning
 
 Voici un exemple de code pour l'architecture des fonctions d'évaluation:
 ```{r lda1, ref.label='lda', eval = FALSE}
 ```
-
 
 Voici le code pour l'évaluation des modèles :
 
