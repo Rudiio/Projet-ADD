@@ -6,7 +6,7 @@ output:
   pdf_document: 
     number_sections: yes
     fig_height: 3
-    fig_width: 5
+    fig_width: 7
 ---
 
 On a beaucoup d'idées reçues par rapport aux facteurs qui feraient d'un étudiant un bon étudiant, notamment sur l'alcool. Le jeu de données que nous avons étudié permet alors de confronter ces idées à des données concrètes.
@@ -388,8 +388,13 @@ On remarque que seul le premier axe explique une grande partie de l'inertie, les
 On affiche alors le graphe des individus pour avoir une meilleure idée.
 
 ```{r ind,echo=FALSE}
+par(mfrow=c(2,2))
 plot(res, select="cos2 0.8", habillage=10, cex=0.9,choix="ind")
+g2=plot(res, select="cos2 0.8", habillage=2, cex=0.9,choix="ind")
+g3=plot(res, select="cos2 0.8", habillage=4, cex=0.9,choix="ind")
+grid.arrange(g2, g3, nrow = 1)
 ```
+
 
 On distingue assez clairement les 3 groupes d'individus sur le graphe.
 De manière logique on retrouve que les élèves ayant une bonne moyenne vers la droite.
